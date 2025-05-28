@@ -28,7 +28,7 @@ export default function UserDetailModal({ id, onClose }) {
           setUserImageUrl(userImg);
           setUserImageLoading(false);
 
-          if (data.partner?.profile) {
+          if (data.partner?.id) {
             setPartnerImageLoading(true);
             const partnerImg = await fetchImageFromMega(data.partner.id);
             setPartnerImageUrl(partnerImg);
@@ -138,37 +138,47 @@ export default function UserDetailModal({ id, onClose }) {
   };
 
   const renderDateInputs = (path) => {
-    const value = path.split(".").reduce((acc, key) => acc[key], formData);
-    const [, month, day] = value.split("-");
-    return (
-      <div className="flex space-x-2">
-        <select
-          value={parseInt(month)}
-          disabled={!editable}
-          onChange={(e) => handleDateChange(path, "month", e.target.value)}
-          className="border p-1 rounded text-sm w-1/2"
-        >
-          {months.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-        <select
-          value={parseInt(day)}
-          disabled={!editable}
-          onChange={(e) => handleDateChange(path, "day", e.target.value)}
-          className="border p-1 rounded text-sm w-1/2"
-        >
-          {days.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  };
+  const value = path.split(".").reduce((acc, key) => acc?.[key], formData);
+  let month = "", day = "";
+
+  if (value) {
+    const parts = value.split("-");
+    if (parts.length === 3) {
+      [, month, day] = parts;
+    }
+  }
+
+  return (
+    <div className="flex space-x-2">
+      <select
+        value={month ? parseInt(month) : ""}
+        disabled={!editable}
+        onChange={(e) => handleDateChange(path, "month", e.target.value)}
+        className="border p-1 rounded text-sm w-1/2"
+      >
+        <option value="">Month</option>
+        {months.map((m) => (
+          <option key={m} value={m}>
+            {m}
+          </option>
+        ))}
+      </select>
+      <select
+        value={day ? parseInt(day) : ""}
+        disabled={!editable}
+        onChange={(e) => handleDateChange(path, "day", e.target.value)}
+        className="border p-1 rounded text-sm w-1/2"
+      >
+        <option value="">Day</option>
+        {days.map((d) => (
+          <option key={d} value={d}>
+            {d}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
 
   const renderImage = (url, alt, userId, isUser = true, isLoading = false) => (
     <div className="relative w-24 mx-auto text-center">
