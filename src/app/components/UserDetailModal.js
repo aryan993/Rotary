@@ -28,7 +28,7 @@ export default function UserDetailModal({ id, onClose }) {
           setUserImageUrl(userImg);
           setUserImageLoading(false);
 
-          if (data.partner?.id) {
+          if (data.partner?.profile) {
             setPartnerImageLoading(true);
             const partnerImg = await fetchImageFromMega(data.partner.id);
             setPartnerImageUrl(partnerImg);
