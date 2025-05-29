@@ -231,7 +231,9 @@ export async function POST(request) {
       </div>
     </body></html>
     `;
-
+    const listofreciever= await fetchreciever();
+    console.log(listofreciever);
+    
     // ✅ Elastic Email SMTP configuration
     const transporter = nodemailer.createTransport({
       host: 'smtp.elasticemail.com',
@@ -266,6 +268,24 @@ export async function POST(request) {
 }
 
 
+  async function fetchreciever(){
+    try{
+      let query=supabase.from('user').select('email').neq('email','NULL');
+      const { data, error } = await query;
+      if(error){
+        console.error("Supabase query for reciever error:", error);
+      throw error;
+      }
+
+      if(!data|| data.length==0){
+        return [];
+      }
+      return data;
+    }catch (err) {
+    console.error("fetchByType error:", err);
+    return [];
+  }
+  }
 
 async function fetchByType(date, type) {
   try {

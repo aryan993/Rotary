@@ -35,11 +35,18 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Third party Services
+
+1. Supabase to store db and perform authentication--[Supabase DB](https://supabase.com/dashboard/organizations)
+2. Mega cloud to store and retrieve images--[Mega cloud](https://mega.nz/fm/9J5SUCzD)
+3. Elastic Email to get service to send mass transactional email(by the account that hold the admin right to the site tbam in this case)--[Elastic Email](https://app.elasticemail.com/api/settings/manage-smtp)
+4. zoho mail to generate business email(email from which the mail need to be send)--[zoho mail](https://mail.zoho.in/zm/#mail/folder/inbox)
+5. Upstash to create a serverless service that call the send email at 12:01 AM everyday(Qstash schedule service)--[Upstash](https://console.upstash.com/redis?teamid=0)
 
 
 ## Elastic Email usage
 
-STMP credential ALIAS ELASTIC_KEY are useful 
-API KEY ignore
-SMTP_USER is the owner of the account 
-SMTP_FROM is the email that we use to send the email and no need of SMTP credential for that
+1. STMP User(same as the owner of elastic account)
+2. ELASTIC_KEY credential is required(Password of STMP credential created--- not the account password)
+3. API KEY ignore
+4. SMTP_FROM is the email that we use to send the email and no need of SMTP credential for that
