@@ -10,12 +10,13 @@ export async function POST(request) {
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_TO) {
       return Response.json({ message: 'Server configuration error' }, { status: 500 });
     }
-
-    const today = new Date();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const date =`2000-${month}-${day}`;
-    console.log(date)
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+    const istDate = new Date(now.getTime() + istOffset);
+    const month = String(istDate.getMonth() + 1).padStart(2, '0');
+    const day = String(istDate.getDate()).padStart(2, '0');
+    const date = `2000-${month}-${day}`;
+    console.log("IST Date used:", date);
     
     // Fetch all 3 types of data
     const [birthdayData, spouseBirthdays, anniversaries] = await Promise.all([
