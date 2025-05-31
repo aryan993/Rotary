@@ -2,11 +2,12 @@
 import { Storage } from 'megajs';
 import nodemailer from 'nodemailer';
 import { supabase } from "@/app/utils/dbconnect";
+import sharp from 'sharp';
 
 export async function POST(request) {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO,EMAIL_FROM } = process.env;
-    const { date} = await request.json();
+    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO, EMAIL_FROM } = process.env;
+    const { date } = await request.json();
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_TO) {
       return Response.json({ message: 'Server configuration error' }, { status: 500 });
@@ -16,15 +17,12 @@ export async function POST(request) {
       return Response.json({ message: 'Invalid request data' }, { status: 400 });
     }
 
-//, data: [birthdayData, spouseBirthdays, anniversaries] 
-
-    // Fetch all 3 types of data
     const [birthdayData, spouseBirthdays, anniversaries] = await Promise.all([
       fetchByType(date, 'member'),
       fetchByType(date, 'spouse'),
       fetchByType(date, 'anniversary'),
     ]);
-    console.log("data fetched")
+    console.log("data fetched");
 
     const storage = new Storage({ email: MEGA_EMAIL, password: MEGA_PASSWORD });
     await new Promise((resolve, reject) => {
@@ -39,19 +37,11 @@ export async function POST(request) {
     let congratsCid = '';
 
     if (congratsFile) {
-      const buffer = await new Promise((resolve, reject) => {
-        const chunks = [];
-        congratsFile.download()
-          .on('data', chunk => chunks.push(chunk))
-          .on('end', () => resolve(Buffer.concat(chunks)))
-          .on('error', reject);
-      });
-
+      const buffer = await downloadFile(congratsFile);
       congratsCid = 'congratulations-image';
-
       attachments.push({
         filename: congratsFile.name,
-        content: buffer,
+        content: buffer, // Uncompressed
         cid: congratsCid,
       });
     }
@@ -67,7 +57,7 @@ export async function POST(request) {
         <body>
           <div style="margin-bottom: 30px;">
             ${congratsCid ? `<div style="text-align: center; margin-bottom: 30px;">
-              <img src="cid:${congratsCid}" style="max-width: 1120px; height: auto;" />
+              <img src="cid:${congratsCid}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
             </div>` : ''}
             <p>Dear Esteemed Rotary Leaders,</p>
             <p>Warm greetings from the Rotary family of District 3012!</p>
@@ -121,35 +111,23 @@ export async function POST(request) {
         let partnerCid = '';
 
         if (file) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            file.download()
-              .on('data', chunk => chunks.push(chunk))
-              .on('end', () => resolve(Buffer.concat(chunks)))
-              .on('error', reject);
-          });
-
+          const buffer = await downloadFile(file);
+          const compressed = file.name !== 'Congratulations.png' ? await compressImage(buffer) : buffer;
           mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
           attachments.push({
             filename: file.name,
-            content: buffer,
+            content: compressed,
             cid: mainCid,
           });
         }
 
         if (partnerFile) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            partnerFile.download()
-              .on('data', chunk => chunks.push(chunk))
-              .on('end', () => resolve(Buffer.concat(chunks)))
-              .on('error', reject);
-          });
-
+          const buffer = await downloadFile(partnerFile);
+          const compressed = partnerFile.name !== 'Congratulations.png' ? await compressImage(buffer) : buffer;
           partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
           attachments.push({
             filename: partnerFile.name,
-            content: buffer,
+            content: compressed,
             cid: partnerCid,
           });
         }
@@ -192,8 +170,8 @@ export async function POST(request) {
       name: record.name || '',
       extraFields: [
         { label: 'Club:', value: record.club },
-        { label: 'Phone', value: record.phone },
-        { label: 'Email', value: record.email },
+        { label: 'Phone:', value: record.phone },
+        { label: 'Email:', value: record.email },
       ],
     }));
 
@@ -211,7 +189,7 @@ export async function POST(request) {
       extraFields: [
         { label: 'Club:', value: record.club },
         { label: 'Phone:', value: record.phone },
-        { label: '', value: record.email },
+        { label: 'Email: ', value: record.email },
       ],
       partnerName: record?.partner?.name || '',
     }), true);
@@ -233,7 +211,6 @@ export async function POST(request) {
     </body></html>
     `;
 
-    // ✅ Elastic Email SMTP configuration
     const transporter = nodemailer.createTransport({
       host: 'smtp.elasticemail.com',
       port: 587,
@@ -244,17 +221,26 @@ export async function POST(request) {
       },
     });
 
-    await transporter.sendMail({
+    const mailOptions = {
       from: `"Birthday Notifications" <${EMAIL_FROM}>`,
       to: EMAIL_TO,
       subject: `Birthdays on ${date.slice(5)}`,
       html: htmlTable,
       attachments,
-    });
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    const htmlSize = Buffer.byteLength(mailOptions.html, 'utf-8');
+    const attachmentsSize = attachments.reduce((sum, att) => sum + (att.content?.length || 0), 0);
+    const totalSize = htmlSize + attachmentsSize;
+
+    console.log(`Email sent successfully. Size: ${(totalSize / (1024 * 1024)).toFixed(2)} MB`);
 
     return Response.json({
       message: 'Email sent successfully',
       count: birthdayData.length,
+      sizeMB: (totalSize / (1024 * 1024)).toFixed(2),
     });
 
   } catch (error) {
@@ -266,45 +252,45 @@ export async function POST(request) {
   }
 }
 
+async function downloadFile(file) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    file.download()
+      .on('data', chunk => chunks.push(chunk))
+      .on('end', () => resolve(Buffer.concat(chunks)))
+      .on('error', reject);
+  });
+}
+
+async function compressImage(buffer) {
+  try {
+    return await sharp(buffer)
+      .resize({ width: 300 })
+      .jpeg({ quality: 60 })
+      .toBuffer();
+  } catch (e) {
+    console.error("Image compression error:", e);
+    return buffer;
+  }
+}
 
 async function fetchByType(date, type) {
   try {
     let query = supabase.from('user');
 
     if (type === 'member') {
-      query = query
-        .select('id, name, club, phone, email')
-        .eq('type', 'member')
-        .eq('dob', date)
-        .eq('active', 'True');
+      query = query.select('id, name, club, phone, email').eq('type', 'member').eq('dob', date).eq('active', 'True');
     } else if (type === 'spouse') {
-      query = query
-        .select('id, name, club, phone, email,partner:partner_id (id,name)')
-        .eq('type', 'spouse')
-        .eq('dob', date)
-        .eq('active', 'True');
+      query = query.select('id, name, club, phone, email,partner:partner_id (id,name)').eq('type', 'spouse').eq('dob', date).eq('active', 'True');
     } else if (type === 'anniversary') {
-      query = query
-        .select('id,name,club,email,phone,partner:partner_id (id,name,club,email,phone)')
-        .eq('type', 'member')
-        .eq('anniversary', date)
-        .eq('active', 'True');
+      query = query.select('id,name,club,email,phone,partner:partner_id (id,name,club,email,phone)').eq('type', 'member').eq('anniversary', date).eq('active', 'True');
     } else {
       throw new Error("Invalid type provided");
     }
 
     const { data, error } = await query;
+    if (error) throw error;
 
-    if (error) {
-      console.error("Supabase query error:", error);
-      throw error;
-    }
-
-    if (!data || data.length === 0) {
-      return [];
-    }
-
-    // Remove duplicate anniversary pairs
     if (type === 'anniversary') {
       const uniquePairs = new Set();
       return data.filter(item => {
@@ -317,8 +303,7 @@ async function fetchByType(date, type) {
       });
     }
 
-    return data;
-
+    return data || [];
   } catch (err) {
     console.error("fetchByType error:", err);
     return [];
