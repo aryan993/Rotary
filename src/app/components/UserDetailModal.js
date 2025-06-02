@@ -257,7 +257,18 @@ export default function UserDetailModal({ id, onClose }) {
             </div>
             <div className="col-span-3 grid grid-cols-3 gap-3">
               <Input label="Name" value={formData.name} path="name" editable={editable} onChange={handleInputChange} />
-              <Input label="Role" value={formData.type} path="type" editable={editable} onChange={handleInputChange} />
+              <div>
+  <label className="block text-sm font-medium text-gray-700 mb-.5">Role</label>
+  <select
+    value={formData.type}
+    onChange={(e) => handleInputChange("type", e.target.value)}
+    disabled={!editable}
+    className="w-full border border-black rounded-md p-1.5"
+  >
+    <option value="member">Member</option>
+    <option value="spouse">Spouse</option>
+  </select>
+</div>
               <Input label="Club" value={formData.club} path="club" editable={editable} onChange={handleInputChange} />
               <Input label="Email" value={formData.email} path="email" editable={editable} onChange={handleInputChange} />
               <Input label="Phone" value={formData.phone} path="phone" editable={editable} onChange={handleInputChange} />
@@ -279,7 +290,19 @@ export default function UserDetailModal({ id, onClose }) {
             </div>
             <div className="col-span-3 grid grid-cols-3 gap-3">
               <Input label="Name" value={formData.partner.name} path="partner.name" editable={editable} onChange={handleInputChange} />
-              <Input label="Role" value={formData.partner.type} path="partner.type" editable={editable} onChange={handleInputChange} />
+              <div>
+  <label className="block text-sm font-medium text-gray-700 mb-.5">Role</label>
+  <select
+    value={formData.partner.type}
+    onChange={(e) => handleInputChange("partner.type", e.target.value)}
+    disabled={!editable}
+    className="w-full border border-black rounded-md p-1.5"
+  >
+    <option value="member">Member</option>
+    <option value="spouse">Spouse</option>
+  </select>
+</div>
+
               <Input label="Club" value={formData.partner.club} path="partner.club" editable={editable} onChange={handleInputChange} />
               <Input label="Email" value={formData.partner.email} path="partner.email" editable={editable} onChange={handleInputChange} />
               <Input label="Phone" value={formData.partner.phone} path="partner.phone" editable={editable} onChange={handleInputChange} />
