@@ -151,19 +151,6 @@ export default function UserDetailModal({ id, onClose }) {
   return (
     <div className="flex space-x-2">
       <select
-        value={month ? parseInt(month) : ""}
-        disabled={!editable}
-        onChange={(e) => handleDateChange(path, "month", e.target.value)}
-        className="border p-1 rounded text-sm w-1/2"
-      >
-        <option value="">Month</option>
-        {months.map((m) => (
-          <option key={m} value={m}>
-            {m}
-          </option>
-        ))}
-      </select>
-      <select
         value={day ? parseInt(day) : ""}
         disabled={!editable}
         onChange={(e) => handleDateChange(path, "day", e.target.value)}
@@ -173,6 +160,19 @@ export default function UserDetailModal({ id, onClose }) {
         {days.map((d) => (
           <option key={d} value={d}>
             {d}
+          </option>
+        ))}
+      </select>
+      <select
+        value={month ? parseInt(month) : ""}
+        disabled={!editable}
+        onChange={(e) => handleDateChange(path, "month", e.target.value)}
+        className="border p-1 rounded text-sm w-1/2"
+      >
+        <option value="">Month</option>
+        {months.map((m) => (
+          <option key={m} value={m}>
+            {m}
           </option>
         ))}
       </select>

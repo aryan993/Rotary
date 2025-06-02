@@ -71,7 +71,7 @@ export async function POST(request) {
       if (!records || records.length === 0) return '';
 
       let html = `
-        <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(5)}</h2>
+        <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(8)}-${date.slice(5,7)}</h2>
         <style>
           .card-container {
             display: flex;
@@ -224,7 +224,7 @@ export async function POST(request) {
     const mailOptions = {
       from: `"Birthday Notifications" <${EMAIL_FROM}>`,
       to: EMAIL_TO,
-      subject: `Birthdays on ${date.slice(5)}`,
+      subject: `Birthdays on ${date.slice(8)}-${date.slice(5,7)}`,
       html: htmlTable,
       attachments,
     };
