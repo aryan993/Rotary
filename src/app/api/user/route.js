@@ -11,7 +11,7 @@ export async function GET(request) {
   if (id) {
     const { data, error } = await supabase
       .from("user")
-      .select("id, name, email, phone, dob, anniversary, club, type,active, partner:partner_id (id, name, email, phone, dob, club, active,type)")
+      .select("id, name, email, phone, dob, anniversary, club, type,active,role, partner:partner_id (id, name, email, phone, dob, club, active,type,role)")
       .eq("id", id)
       .single();
 
@@ -92,6 +92,7 @@ export async function POST(req) {
 
   const person1 = {
     name: form.get("name1"),
+    role: form.get("role1"),
     email: form.get("email1"),
     phone: form.get("phone1"),
     dob: form.get("dob1"),
@@ -102,6 +103,7 @@ export async function POST(req) {
 
   const person2 = {
     name: form.get("name2"),
+    role: form.get("role2"),
     email: form.get("email2"),
     phone: form.get("phone2"),
     dob: form.get("dob2"),
@@ -116,6 +118,7 @@ export async function POST(req) {
       .from("user")
       .insert({
         name: person1.name,
+        role: person1.role,
         email: person1.email || null,
         phone: person1.phone || null,
         dob: person1.dob || null,
@@ -136,6 +139,7 @@ export async function POST(req) {
       .from("user")
       .insert({
         name: person2.name,
+        role: person2.role,
         email: person2.email || null,
         phone: person2.phone || null,
         dob: person2.dob || null,

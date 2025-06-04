@@ -138,47 +138,47 @@ export default function UserDetailModal({ id, onClose }) {
   };
 
   const renderDateInputs = (path) => {
-  const value = path.split(".").reduce((acc, key) => acc?.[key], formData);
-  let month = "", day = "";
+    const value = path.split(".").reduce((acc, key) => acc?.[key], formData);
+    let month = "", day = "";
 
-  if (value) {
-    const parts = value.split("-");
-    if (parts.length === 3) {
-      [, month, day] = parts;
+    if (value) {
+      const parts = value.split("-");
+      if (parts.length === 3) {
+        [, month, day] = parts;
+      }
     }
-  }
 
-  return (
-    <div className="flex space-x-2">
-      <select
-        value={day ? parseInt(day) : ""}
-        disabled={!editable}
-        onChange={(e) => handleDateChange(path, "day", e.target.value)}
-        className="border p-1 rounded text-sm w-1/2"
-      >
-        <option value="">Day</option>
-        {days.map((d) => (
-          <option key={d} value={d}>
-            {d}
-          </option>
-        ))}
-      </select>
-      <select
-        value={month ? parseInt(month) : ""}
-        disabled={!editable}
-        onChange={(e) => handleDateChange(path, "month", e.target.value)}
-        className="border p-1 rounded text-sm w-1/2"
-      >
-        <option value="">Month</option>
-        {months.map((m) => (
-          <option key={m} value={m}>
-            {m}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-};
+    return (
+      <div className="flex space-x-2">
+        <select
+          value={day ? parseInt(day) : ""}
+          disabled={!editable}
+          onChange={(e) => handleDateChange(path, "day", e.target.value)}
+          className="border p-1 rounded text-sm w-1/2"
+        >
+          <option value="">Day</option>
+          {days.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+        <select
+          value={month ? parseInt(month) : ""}
+          disabled={!editable}
+          onChange={(e) => handleDateChange(path, "month", e.target.value)}
+          className="border p-1 rounded text-sm w-1/2"
+        >
+          <option value="">Month</option>
+          {months.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
 
   const renderImage = (url, alt, userId, isUser = true, isLoading = false) => (
     <div className="relative w-24 mx-auto text-center">
@@ -258,17 +258,30 @@ export default function UserDetailModal({ id, onClose }) {
             <div className="col-span-3 grid grid-cols-3 gap-3">
               <Input label="Name" value={formData.name} path="name" editable={editable} onChange={handleInputChange} />
               <div>
-  <label className="block text-sm font-medium text-gray-700 mb-.5">Role</label>
-  <select
-    value={formData.type}
-    onChange={(e) => handleInputChange("type", e.target.value)}
-    disabled={!editable}
-    className="w-full border border-black rounded-md p-1.5"
-  >
-    <option value="member">Member</option>
-    <option value="spouse">Spouse</option>
-  </select>
-</div>
+                <label className="block text-sm font-medium text-gray-700 mb-.5">Role</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => handleInputChange("role", e.target.value)}
+                  disabled={!editable}
+                  className="w-full border border-black rounded-md p-1.5"
+                >
+                  <option value="District Team">District Team</option>
+                  <option value="Influencer President">Influencer President</option>
+                  <option value="Secretary">Secretary</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-.5">Type</label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => handleInputChange("type", e.target.value)}
+                  disabled={!editable}
+                  className="w-full border border-black rounded-md p-1.5"
+                >
+                  <option value="member">Member</option>
+                  <option value="spouse">Spouse</option>
+                </select>
+              </div>
               <Input label="Club" value={formData.club} path="club" editable={editable} onChange={handleInputChange} />
               <Input label="Email" value={formData.email} path="email" editable={editable} onChange={handleInputChange} />
               <Input label="Phone" value={formData.phone} path="phone" editable={editable} onChange={handleInputChange} />
@@ -291,17 +304,30 @@ export default function UserDetailModal({ id, onClose }) {
             <div className="col-span-3 grid grid-cols-3 gap-3">
               <Input label="Name" value={formData.partner.name} path="partner.name" editable={editable} onChange={handleInputChange} />
               <div>
-  <label className="block text-sm font-medium text-gray-700 mb-.5">Role</label>
-  <select
-    value={formData.partner.type}
-    onChange={(e) => handleInputChange("partner.type", e.target.value)}
-    disabled={!editable}
-    className="w-full border border-black rounded-md p-1.5"
-  >
-    <option value="member">Member</option>
-    <option value="spouse">Spouse</option>
-  </select>
-</div>
+                <label className="block text-sm font-medium text-gray-700 mb-.5">Role</label>
+                <select
+                  value={formData.partner.role}
+                  onChange={(e) => handleInputChange("partner.role", e.target.value)}
+                  disabled={!editable}
+                  className="w-full border border-black rounded-md p-1.5"
+                >
+                  <option value="District Team">District Team</option>
+                  <option value="Influencer President">Influencer President</option>
+                  <option value="Secretary">Secretary</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-.5">Type</label>
+                <select
+                  value={formData.partner.type}
+                  onChange={(e) => handleInputChange("partner.type", e.target.value)}
+                  disabled={!editable}
+                  className="w-full border border-black rounded-md p-1.5"
+                >
+                  <option value="member">Member</option>
+                  <option value="spouse">Spouse</option>
+                </select>
+              </div>
 
               <Input label="Club" value={formData.partner.club} path="partner.club" editable={editable} onChange={handleInputChange} />
               <Input label="Email" value={formData.partner.email} path="partner.email" editable={editable} onChange={handleInputChange} />
