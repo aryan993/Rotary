@@ -27,7 +27,7 @@ export default function SendBirthdayEmail() {
 const [, month, day] = date.split('-');
 const formattedDate = `2000-${month}-${day}`;
 
-      const res = await fetch('/api/email/test-send-birthday-email', {
+      const res = await fetch('/api/email/tbam/test-send-birthday-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: formattedDate }),
@@ -52,7 +52,7 @@ const formattedDate = `2000-${month}-${day}`;
     setIsError(false);
 
     try {
-      const res = await fetch('/api/email/send-birthday-email', {
+      const res = await fetch('/api/email/tbam/send-birthday-email', {
         method: 'POST',
       });
 
