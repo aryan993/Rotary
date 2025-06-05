@@ -18,6 +18,7 @@ export default function PersonForm() {
       email: '',
       phone: '',
       usertype: 'member',
+      role: "District team",
       dob: { day: '', month: '' },
       image: null,
     };
@@ -102,6 +103,7 @@ export default function PersonForm() {
     formData.append('email1', person1.email);
     formData.append('phone1', person1.phone);
     formData.append('userType1', person1.usertype);
+    formData.append('role1', person1.role);
     formData.append('dob1', formatDate(person1.dob.day, person1.dob.month));
     if (person1.image) formData.append('image1', person1.image);
 
@@ -110,6 +112,7 @@ export default function PersonForm() {
     formData.append('email2', person2.email);
     formData.append('phone2', person2.phone);
     formData.append('userType2', person2.usertype);
+    formData.append('role2', person2.role);
     formData.append('dob2', formatDate(person2.dob.day, person2.dob.month));
     if (person2.image) formData.append('image2', person2.image);
 
@@ -211,6 +214,11 @@ function PersonSection({ label, person, onChange, onDateChange, onImageChange, i
       <select name="usertype" className="w-full border rounded p-1" value={person.usertype} onChange={(e) => onChange(e, key)}>
         <option value="member">Member</option>
         <option value="spouse">Spouse</option>
+      </select>
+      <select name="role" className="w-full border rounded p-1" value={person.role} onChange={(e) => onChange(e, key)}>
+        <option value="District Team">District Team</option>
+        <option value="Influencer President">Influencer President</option>
+        <option value="Secretary">Secretary</option>
       </select>
 
       <div>
