@@ -313,7 +313,7 @@ export default function UserDetailModal({ id, onClose }) {
                 >
                   <option value="District Team">District Team</option>
                   <option value="Influencer President">Influencer President</option>
-                  <option value="Secretary">Secretary</option>
+                  <option value="Influencer Secretary">Influencer Secretary</option>
                 </select>
               </div>
               <div>
