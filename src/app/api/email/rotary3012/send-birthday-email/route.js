@@ -5,7 +5,7 @@ import { supabase } from "@/app/utils/dbconnect";
 
 export async function POST(request) {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO,EMAIL_FROM } = process.env;
+    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO,EMAIL_FROM,EMAIL_TEST } = process.env;
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_TO) {
       return Response.json({ message: 'Server configuration error' }, { status: 500 });
@@ -71,7 +71,7 @@ export async function POST(request) {
             </div>` : ''}
             <p>Dear Esteemed Rotary Leaders,</p>
             <p>Warm greetings from the Rotary family of District 3012!</p>
-            <p>On behalf of District Governor <strong>Rtn. Dr. Amita Mohindru</strong> and the distinguished <strong>Rtn. Dr. Capt. Anil Mohindru</strong>, we take great pleasure in extending our heartfelt wishes to all those celebrating their birthdays and wedding anniversaries today.</p>
+            <p>On behalf of District Governor <strong>Rtn. Dr. Amita Mohindru</strong> and the distinguished <strong>Rtn. Dr. Capt. Anil Mohindru</strong>, we take great pleasure in extending our heartfelt wishes to all those celebrating their birthdays and anniversaries today.</p>
             <p>May your day be filled with joy, good health, and cherished moments of togetherness. This simple gesture is a celebration of the spirit of fellowship that binds us all.</p>
             <p>Stay blessed, stay healthy, and keep inspiring!</p>
           </div>
@@ -159,21 +159,20 @@ export async function POST(request) {
         const renderFields = (fields) =>
           fields
             .filter(f => f.value && f.value !== 'NULL')
-            .map(f => `<p style="margin: 4px 0; font-size: 14px;"><strong>${f.label}</strong> ${f.value}</p>`)
+            .map(f => `<p style="margin: 4px 0; font-size: 14px;"><strong>${f.label}</strong> ${toTitleCase(f.value)}</p>`)
             .join('');
 
         html += `
           <div class="card">
-            <div style="border: 1px solid #ccc; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">
-              <div style="flex-shrink: 0; margin-right: 10px;">
+                <div style="background-color: rgba(196,230,248,1); border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">              <div style="flex-shrink: 0; margin-right: 10px;">
                 <div style="display: flex; gap: 8px;">
                   <img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />
                   ${partnerCid ? `<img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />` : ''}
                 </div>
               </div>
               <div>
-                <h3 style="margin: 0 0 8px 0; font-size: 16px;">${details.name || ''}</h3>
-                ${sideBySide && details.partnerName ? `
+                <h3 style="margin: 0 0 4px 0; font-size: 16px;">${toTitleCase(details.name) || ''}</h3>
+                ${sideBySide && toTitleCase(details.partnerName) ? `
                   <div style="display: flex; gap: 40px;">
                     <div>${renderFields(details.extraFields)}</div>
                   </div>` :
@@ -193,8 +192,8 @@ export async function POST(request) {
       extraFields: [
         { label: 'Post:', value: record.role },
         { label: 'Club:', value: record.club },
-        { label: 'Phone', value: record.phone },
-        { label: 'Email', value: record.email },
+        { label: 'Phone:', value: record.phone },
+        { label: 'Email:', value: record.email },
       ],
     }));
 
@@ -213,7 +212,7 @@ export async function POST(request) {
         { label: 'Post:', value: record.role },
         { label: 'Club:', value: record.club },
         { label: 'Phone:', value: record.phone },
-        { label: '', value: record.email },
+        { label: 'Email:', value: record.email },
       ],
       partnerName: record?.partner?.name || '',
     }), true);
@@ -234,8 +233,8 @@ export async function POST(request) {
       </div>
     </body></html>
     `;
-    const listofreciever= await fetchreciever();
-    console.log(listofreciever);
+    //const listofreciever= await fetchreciever();
+    //console.log(listofreciever);
     
     // ✅ Elastic Email SMTP configuration
     const transporter = nodemailer.createTransport({
@@ -251,6 +250,7 @@ export async function POST(request) {
     await transporter.sendMail({
       from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
       to: EMAIL_TO,
+      bcc:EMAIL_TEST,
       subject: `Birthday and Anniversary Notification ${date.slice(8)}-${date.slice(5,7)}`,
       html: htmlTable,
       attachments,
@@ -269,7 +269,6 @@ export async function POST(request) {
     );
   }
 }
-
 
 async function fetchreciever(){
     try{
@@ -346,4 +345,13 @@ async function fetchByType(date, type) {
     console.error("fetchByType error:", err);
     return [];
   }
+}
+
+function toTitleCase(str) {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
