@@ -6,7 +6,7 @@ import sharp from 'sharp';
 
 export async function POST(request) {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO, EMAIL_FROM } = process.env;
+    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO, EMAIL_FROM, EMAIL_TEST } = process.env;
     const { date } = await request.json();
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_TO) {
@@ -71,7 +71,7 @@ export async function POST(request) {
       if (!records || records.length === 0) return '';
 
       let html = `
-        <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(8)}-${date.slice(5,7)}</h2>
+        <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(8)}-${date.slice(5, 7)}</h2>
         <style>
           .card-container {
             display: flex;
@@ -155,7 +155,7 @@ export async function POST(request) {
                   <div style="display: flex; gap: 40px;">
                     <div>${renderFields(details.extraFields)}</div>
                   </div>` :
-                `${renderFields(details.extraFields)}`}
+            `${renderFields(details.extraFields)}`}
               </div>
             </div>
           </div>
@@ -226,7 +226,8 @@ export async function POST(request) {
     const mailOptions = {
       from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
       to: EMAIL_TO,
-      subject: `Birthday and Anniversary Notification ${date.slice(8)}-${date.slice(5,7)}`,
+      bcc: EMAIL_TEST,
+      subject: `Birthday and Anniversary Notification ${date.slice(8)}-${date.slice(5, 7)}`,
       html: htmlTable,
       attachments,
     };
