@@ -250,7 +250,6 @@ export async function POST(request) {
     await transporter.sendMail({
       from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
       to: EMAIL_TO,
-      bcc:EMAIL_TEST,
       subject: `Birthday and Anniversary Notification ${date.slice(8)}-${date.slice(5,7)}`,
       html: htmlTable,
       attachments,
