@@ -49,6 +49,10 @@ export default function User() {
   }, [fetchdata]);
 
   useEffect(() => {
+    if (!Array.isArray(data)) {
+    setFilteredData([]);
+    return;
+  }
     const filtered = data.filter((item) => {
       const target = filterColumn === "partner.name"
         ? item?.partner?.name
@@ -317,8 +321,14 @@ export default function User() {
       </div>
 
       {modalId && (
-        <UserDetailModal id={modalId} onClose={() => setModalId(null)} />
-      )}
+  <UserDetailModal
+    id={modalId}
+    onClose={() => {
+      setModalId(null);
+      fetchdata();  // Refresh page on modal close
+    }}
+  />
+)}
     </div>
   );
 }

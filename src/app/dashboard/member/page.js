@@ -51,12 +51,17 @@ export default function User() {
   }, [fetchdata]);
 
   useEffect(() => {
-    const filtered = data.filter((row) =>
-      row[filterColumn]?.toLowerCase().includes(filterValue.toLowerCase())
-    );
-    setFilteredData(filtered);
-    setCurrentPage(1);
-  }, [data, filterColumn, filterValue]);
+  if (!Array.isArray(data)) {
+    setFilteredData([]);
+    return;
+  }
+
+  const filtered = data.filter((row) =>
+    row[filterColumn]?.toLowerCase().includes(filterValue.toLowerCase())
+  );
+  setFilteredData(filtered);
+  setCurrentPage(1);
+}, [data, filterColumn, filterValue]);
 
   const handleUploadClick = (id) => {
     setSelectedId(id);
@@ -205,43 +210,52 @@ export default function User() {
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map((row, idx) => (
-              <tr
-                key={row.id}
-                onClick={(e) => handleRowClick(e, row.id)}
-                className={`cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
-              >
-                <td className="border px-4 py-2">{row.name}</td>
-                <td className="border px-4 py-2">{row.email}</td>
-                <td className="border px-4 py-2">{row.phone}</td>
-                <td className="border px-4 py-2">{formatMonthDay(row.dob)}</td>
-                <td className="border px-4 py-2">
-                  <button
-                    onClick={() => handleUploadClick(row.id)}
-                    className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
-                      ${row.profile ? 'bg-green-600' : 'bg-red-600'}
-                      ${uploading && selectedId === row.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={uploading}
-                  >
-                    {uploading && selectedId === row.id ? "Uploading..." : "Upload"}
-                  </button>
-                </td>
-                <td className="border px-4 py-2">
-                  <button
-                    onClick={() =>
-                      handleDownload(`${row.id}.jpg`, setMessage, setMessageType, setIsLoading)
-                    }
-                    className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
-                      ${row.profile ? 'bg-green-600' : 'bg-red-600'}
-                      ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Downloading..." : "Download"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  {paginatedData.length === 0 ? (
+    <tr>
+      <td colSpan="6" className="text-center px-4 py-6 text-gray-500">
+        No users found.
+      </td>
+    </tr>
+  ) : (
+    paginatedData.map((row, idx) => (
+      <tr
+        key={row.id}
+        onClick={(e) => handleRowClick(e, row.id)}
+        className={`cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
+      >
+        <td className="border px-4 py-2">{row.name}</td>
+        <td className="border px-4 py-2">{row.email}</td>
+        <td className="border px-4 py-2">{row.phone}</td>
+        <td className="border px-4 py-2">{formatMonthDay(row.dob)}</td>
+        <td className="border px-4 py-2">
+          <button
+            onClick={() => handleUploadClick(row.id)}
+            className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
+              ${row.profile ? 'bg-green-600' : 'bg-red-600'}
+              ${uploading && selectedId === row.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={uploading}
+          >
+            {uploading && selectedId === row.id ? "Uploading..." : "Upload"}
+          </button>
+        </td>
+        <td className="border px-4 py-2">
+          <button
+            onClick={() =>
+              handleDownload(`${row.id}.jpg`, setMessage, setMessageType, setIsLoading)
+            }
+            className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
+              ${row.profile ? 'bg-green-600' : 'bg-red-600'}
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isLoading}
+          >
+            {isLoading ? "Downloading..." : "Download"}
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
+
         </table>
         <input
           type="file"
@@ -273,8 +287,15 @@ export default function User() {
       </div>
 
       {modalId && (
-        <UserDetailModal id={modalId} onClose={() => setModalId(null)} />
-      )}
+  <UserDetailModal
+    id={modalId}
+    onClose={() => {
+      setModalId(null);
+      fetchdata();  // Refresh page on modal close
+    }}
+  />
+)}
+
     </div>
   );
 }

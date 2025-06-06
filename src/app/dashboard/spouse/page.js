@@ -48,6 +48,10 @@ export default function User() {
   }, [fetchData]);
 
   useEffect(() => {
+    if (!Array.isArray(data)) {
+    setFilteredData([]);
+    return;
+  }
     let result = data;
     if (filterValue.trim()) {
       result = data.filter((row) =>
@@ -267,8 +271,14 @@ export default function User() {
         </button>
       </div>
 
-      {modalId && (
-        <UserDetailModal id={modalId} onClose={() => setModalId(null)} />
+            {modalId && (
+        <UserDetailModal
+          id={modalId}
+          onClose={() => {
+            setModalId(null);
+            fetchdata();  // Refresh page on modal close
+          }}
+        />
       )}
     </div>
   );
