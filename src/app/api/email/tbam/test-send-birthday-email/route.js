@@ -200,7 +200,7 @@ export async function POST(request) {
             <em>Designed and Maintained by</em>
             <strong>Tirupati Balaji Advertising & Marketing</strong><br />
             (Director of TBAM Group Dr Dheeraj Kumar Bhargava)<br />
-            (Dr Dheeraj Kumar Bhargava-9810522380, Mrs Manisha Bhargava-9818373200 , Prateek Bhargava-8130640011)<br />
+            (Dr Dheeraj Kumar Bhargava-9810522380, Mrs Manisha Bhargava-9818373200, Prateek Bhargava-8130640011)<br />
             (https://tbam.co.in/)<br />
           </p>
         </div>
