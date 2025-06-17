@@ -21,8 +21,7 @@ export async function POST(request) {
       fetchByType(date, 'member'),
       fetchByType(date, 'spouse'),
       fetchByType(date, 'anniversary'),
-    ]);
-    console.log("today's data fetched");
+    ]); 
 
     const storage = new Storage({ email: MEGA_EMAIL, password: MEGA_PASSWORD });
     await new Promise((resolve, reject) => {
@@ -52,6 +51,7 @@ export async function POST(request) {
         cid: congratsCid,
       });
     }
+    const year = new Date().getFullYear();
 
     let htmlTable = `
     <!DOCTYPE html>
@@ -79,7 +79,7 @@ export async function POST(request) {
       if (!records || records.length === 0) return '';
 
       let html = `
-        <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(5)}</h2>
+        <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(5)}-${year}</h2>
         <style>
           .card-container {
             display: flex;
@@ -175,7 +175,7 @@ export async function POST(request) {
                   <div style="display: flex; gap: 40px;">
                     <div>${renderFields(details.extraFields)}</div>
                   </div>` :
-          `${renderFields(details.extraFields)}`}
+            `${renderFields(details.extraFields)}`}
               </div>
             </div>
           </div>
@@ -277,14 +277,19 @@ export async function POST(request) {
       },
     });
 
-    await transporter.sendMail({
-      from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
-      to: EMAIL_TO,
-      bcc: EMAIL_TEST,
-      subject: `Birthday and Anniversary Notification ${date.slice(8)}-${date.slice(5, 7)}`,
-      html: htmlTable,
-      attachments,
-    });
+    const email_list = EMAIL_TEST.split(',').map(email => email.trim());
+
+    for (const recipient of email_list) {
+      await transporter.sendMail({
+        from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
+        to: recipient,  // send to one person at a time
+        replyTo: 'rtndramitaanilmohindru@gmail.com',
+        subject: `Birthday and Anniversary Notification ${date.slice(8)}-${date.slice(5, 7)}-${year}`,
+        html: htmlTable,
+        attachments,
+      });
+      console.log("email send to "+recipient)
+    }
 
     return Response.json({
       message: 'Email sent successfully',
