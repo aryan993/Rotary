@@ -141,9 +141,8 @@ export async function POST(request) {
 
         html += `
           <div class="card">
-            <div style="border: 1px solid #ccc; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">
-              <div style="flex-shrink: 0; margin-right: 10px;">
-                <div style="display: flex; gap: 8px;">
+            <div style="background-color: rgba(254,244,223,255); border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">              <div style="flex-shrink: 0; margin-right: 10px;">
+                    <div style="display: flex; gap: 8px;">
                   <img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />
                   ${partnerCid ? `<img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />` : ''}
                 </div>
@@ -204,7 +203,9 @@ export async function POST(request) {
           <p>
             <em>Designed and Maintained by</em>
             <strong>Tirupati Balaji Advertising & Marketing</strong><br />
-            (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava)<br />
+            (Director of TBAM Group Dr Dheeraj Kumar Bhargava)<br />
+            (Dr Dheeraj Kumar Bhargava-9810522380, Mrs Manisha Bhargava-9818373200 , Prateek Bhargava-8130640011)<br />
+            (https://tbam.co.in/)<br />
           </p>
         </div>
       </div>
