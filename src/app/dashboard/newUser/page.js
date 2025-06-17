@@ -218,7 +218,7 @@ function PersonSection({ label, person, onChange, onDateChange, onImageChange, i
       <select name="role" className="w-full border rounded p-1" value={person.role} onChange={(e) => onChange(e, key)}>
         <option value="District Team">District Team</option>
         <option value="Influencer President">Influencer President</option>
-        <option value="Secretary">Secretary</option>
+        <option value="Influencer Secretary">Influencer Secretary</option>
       </select>
 
       <div>
