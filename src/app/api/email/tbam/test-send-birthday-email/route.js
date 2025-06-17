@@ -1,4 +1,5 @@
 // app/api/send-birthday-email/route.js
+// app/api/send-birthday-email/route.js
 import { Storage } from 'megajs';
 import nodemailer from 'nodemailer';
 import { supabase } from "@/app/utils/dbconnect";
@@ -6,7 +7,7 @@ import sharp from 'sharp';
 
 export async function POST(request) {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY,EMAIL_TO, EMAIL_FROM,EMAIL_TEST } = process.env;
+    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO, EMAIL_FROM, EMAIL_TEST } = process.env;
     const { date } = await request.json();
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_TO) {
@@ -41,7 +42,7 @@ export async function POST(request) {
       congratsCid = 'congratulations-image';
       attachments.push({
         filename: congratsFile.name,
-        content: buffer, // Uncompressed
+        content: buffer,
         cid: congratsCid,
       });
     }
@@ -55,15 +56,14 @@ export async function POST(request) {
           </style>
         </head>
         <body>
-          <div style="margin-bottom: 30px;">
+          <div style="max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box;">
             ${congratsCid ? `<div style="text-align: center; margin-bottom: 30px;">
-              <img src="cid:${congratsCid}" style="max-width: 1020px; height: auto;" />
+              <img src="cid:${congratsCid}" style="max-width: 100%; height: auto;" />
             </div>` : ''}
             <p>Dear Friends,</p>
             <p>On behalf of the entire team at <strong>Tirupati Balaji Advertising & Marketing, Tirupati Balaji Chronicle Bilingual News Paper </strong>-<strong style="color: red;">Dr Dheeraj K Bhargava </strong>,<strong style="color: red;"> Mrs Manisha Bhargava</strong> And <strong style="color: red;">Prateek Bhargava</strong> extend warmest wishes to all those celebrating their birthdays and wedding anniversaries today.</p>
             <p>May this day bring you immense happiness, love, and cherished moments with your loved ones. Here's to new beginnings, memorable experiences, and a life filled with prosperity and positivity.</p>
             <p>Stay happy, stay healthy, and keep shining your light on the world!</p>
-          </div>
     `;
 
     async function generateCardsSection(title, records, getDetailsFn, sideBySide = false) {
@@ -141,8 +141,9 @@ export async function POST(request) {
 
         html += `
           <div class="card">
-            <div style="background-color: rgba(254,244,223,255); border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">              <div style="flex-shrink: 0; margin-right: 10px;">
-                    <div style="display: flex; gap: 8px;">
+            <div style="background-color: rgba(254,244,223,255); border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">
+              <div style="flex-shrink: 0; margin-right: 10px;">
+                <div style="display: flex; gap: 8px;">
                   <img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />
                   ${partnerCid ? `<img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />` : ''}
                 </div>
@@ -205,7 +206,9 @@ export async function POST(request) {
           </p>
         </div>
       </div>
-    </body></html>
+          </div>
+        </body>
+      </html>
     `;
 
     const transporter = nodemailer.createTransport({
@@ -248,6 +251,8 @@ export async function POST(request) {
     );
   }
 }
+
+// downloadFile, compressImage, fetchByType remain unchanged
 
 async function downloadFile(file) {
   return new Promise((resolve, reject) => {
