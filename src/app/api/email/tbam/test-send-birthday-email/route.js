@@ -6,7 +6,7 @@ import sharp from 'sharp';
 
 export async function POST(request) {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_FROM,EMAIL_TEST } = process.env;
+    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY,EMAIL_TO, EMAIL_FROM,EMAIL_TEST } = process.env;
     const { date } = await request.json();
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_TO) {
