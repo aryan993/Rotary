@@ -60,7 +60,7 @@ export async function POST(request) {
               <img src="cid:${congratsCid}" style="max-width: 1020px; height: auto;" />
             </div>` : ''}
             <p>Dear Friends,</p>
-            <p>On behalf of the entire team at Tirupati Balaji Advertising & Marketing, Tirupati Balaji Chronicle Bilingual News Paper -<strong>Dr Dheeraj K Bhargava </strong>,<strong> Mrs Manisha Bhargava</strong>* And <strong>Prateek Bhargava</strong> extend warmest wishes to all those celebrating their birthdays and wedding anniversaries today.</p>
+            <p>On behalf of the entire team at <strong>Tirupati Balaji Advertising & Marketing, Tirupati Balaji Chronicle Bilingual News Paper </strong>-<strong style="color: red;">Dr Dheeraj K Bhargava </strong>,<strong style="color: red;"> Mrs Manisha Bhargava</strong> And <strong style="color: red;">Prateek Bhargava</strong> extend warmest wishes to all those celebrating their birthdays and wedding anniversaries today.</p>
             <p>May this day bring you immense happiness, love, and cherished moments with your loved ones. Here's to new beginnings, memorable experiences, and a life filled with prosperity and positivity.</p>
             <p>Stay happy, stay healthy, and keep shining your light on the world!</p>
           </div>
@@ -204,8 +204,7 @@ export async function POST(request) {
           <p>
             <em>Designed and Maintained by</em>
             <strong>Tirupati Balaji Advertising & Marketing</strong><br />
-            (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava<br />
-            Founder and Charter President of RC Indirapuram Galore, District Club Co-ordinator)
+            (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava)<br />
           </p>
         </div>
       </div>
