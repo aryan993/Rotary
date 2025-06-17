@@ -167,8 +167,6 @@ export async function POST(request) {
     htmlTable += await generateCardsSection('Birthdays', birthdayData, (record) => ({
       name: record.name || '',
       extraFields: [
-        { label: 'Post:', value: record.role },
-        { label: 'Club:', value: record.club },
         { label: 'Phone:', value: record.phone },
         { label: 'Email:', value: record.email },
       ],
@@ -186,8 +184,6 @@ export async function POST(request) {
     htmlTable += await generateCardsSection('Anniversaries', anniversaries, (record) => ({
       name: `${record.name} & ${record?.partner?.name}` || '',
       extraFields: [
-        { label: 'Post:', value: record.role },
-        { label: 'Club:', value: record.club },
         { label: 'Phone:', value: record.phone },
         { label: 'Email: ', value: record.email },
       ],
@@ -280,11 +276,11 @@ async function fetchByType(date, type) {
     let query = supabase.from('user');
 
     if (type === 'member') {
-      query = query.select('id, name, club, phone, email,role').eq('type', 'member').eq('dob', date).eq('active', 'True');
+      query = query.select('id, name, phone, email').eq('type', 'member').eq('dob', date).eq('active', 'True');
     } else if (type === 'spouse') {
-      query = query.select('id, name, club, phone, email,partner:partner_id (id,name)').eq('type', 'spouse').eq('dob', date).eq('active', 'True');
+      query = query.select('id, name, phone, email,partner:partner_id (id,name)').eq('type', 'spouse').eq('dob', date).eq('active', 'True');
     } else if (type === 'anniversary') {
-      query = query.select('id,name,club,email,phone,role,partner:partner_id (id,name,club,email,phone)').eq('type', 'member').eq('anniversary', date).eq('active', 'True');
+      query = query.select('id,name,email,phone,partner:partner_id (id,name,email,phone)').eq('type', 'member').eq('anniversary', date).eq('active', 'True');
     } else {
       throw new Error("Invalid type provided");
     }
