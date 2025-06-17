@@ -22,7 +22,7 @@ export async function POST(request) {
       fetchByType(date, 'spouse'),
       fetchByType(date, 'anniversary'),
     ]);
-    console.log("today's data fetched")
+    console.log("today's data fetched");
 
     const storage = new Storage({ email: MEGA_EMAIL, password: MEGA_PASSWORD });
     await new Promise((resolve, reject) => {
@@ -46,7 +46,6 @@ export async function POST(request) {
       });
 
       congratsCid = 'congratulations-image';
-
       attachments.push({
         filename: congratsFile.name,
         content: buffer,
@@ -55,59 +54,58 @@ export async function POST(request) {
     }
 
     let htmlTable = `
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <style>
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-      </style>
-    </head>
-    <body>
-      <div style="max-width: 900px; margin: auto; padding: 20px; box-sizing: border-box;">
-        <div style="margin-bottom: 30px;">
-          ${congratsCid ? `<div style="text-align: center; margin-bottom: 30px;">
-            <img src="cid:${congratsCid}" style="max-width: 100%; height: auto;" />
-          </div>` : ''}
-          <p>Dear Esteemed Rotary Leaders,</p>
-          <p>Warm greetings from the Rotary family of District 3012!</p>
-          <p>On behalf of District Governor <strong>Rtn. Dr. Amita Mohindru</strong> and the distinguished <strong>Rtn. Dr. Capt. Anil Mohindru</strong>, we take great pleasure in extending our heartfelt wishes to all those celebrating their birthdays and anniversaries today.</p>
-          <p>May your day be filled with joy, good health, and cherished moments of togetherness. This simple gesture is a celebration of the spirit of fellowship that binds us all.</p>
-          <p>Stay blessed, stay healthy, and keep inspiring!</p>
-        </div>
-`;
-
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        </style>
+      </head>
+      <body>
+        <div style="max-width: 900px; margin: auto; padding: 20px; box-sizing: border-box;">
+          <div style="margin-bottom: 30px;">
+            ${congratsCid ? `<div style="text-align: center; margin-bottom: 30px;">
+              <img src="cid:${congratsCid}" style="max-width: 100%; height: auto;" />
+            </div>` : ''}
+            <p>Dear Esteemed Rotary Leaders,</p>
+            <p>Warm greetings from the Rotary family of District 3012!</p>
+            <p>On behalf of District Governor <strong>Rtn. Dr. Amita Mohindru</strong> and the distinguished <strong>Rtn. Dr. Capt. Anil Mohindru</strong>, we take great pleasure in extending our heartfelt wishes to all those celebrating their birthdays and anniversaries today.</p>
+            <p>May your day be filled with joy, good health, and cherished moments of togetherness. This simple gesture is a celebration of the spirit of fellowship that binds us all.</p>
+            <p>Stay blessed, stay healthy, and keep inspiring!</p>
+          </div>
+    `;
 
     async function generateCardsSection(title, records, getDetailsFn, sideBySide = false) {
       if (!records || records.length === 0) return '';
 
       let html = `
-            <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(5)}</h2>
-            <style>
-              .card-container {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 20px;
-                justify-content: center;
-                box-sizing: border-box;
-                margin-bottom: 20px;
-              }
-    
-              .card {
-                flex: 1 1 calc(50% - 10px);
-                max-width: calc(50% - 10px);
-                padding: 10px;
-                box-sizing: border-box;
-              }
-    
-              @media only screen and (max-width: 600px) {
-                .card {
-                  flex: 1 1 100%;
-                  max-width: 100%;
-                }
-              }
-            </style>
-            <div class="card-container">
-          `;
+        <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(5)}</h2>
+        <style>
+          .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+          }
+
+          .card {
+            flex: 1 1 calc(50% - 10px);
+            max-width: calc(50% - 10px);
+            padding: 10px;
+            box-sizing: border-box;
+          }
+
+          @media only screen and (max-width: 600px) {
+            .card {
+              flex: 1 1 100%;
+              max-width: 100%;
+            }
+          }
+        </style>
+        <div class="card-container">
+      `;
 
       for (const record of records) {
         const imageName = `${record.id}.jpg`;
@@ -163,24 +161,25 @@ export async function POST(request) {
             .join('');
 
         html += `
-              <div class="card">
-                    <div style="background-color: rgba(196,230,248,1); border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">              <div style="flex-shrink: 0; margin-right: 10px;">
-                    <div style="display: flex; gap: 8px;">
-                      <img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />
-                      ${partnerCid ? `<img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />` : ''}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 style="margin: 0 0 4px 0; font-size: 16px;">${toTitleCase(details.name) || ''}</h3>
-                    ${sideBySide && toTitleCase(details.partnerName) ? `
-                      <div style="display: flex; gap: 40px;">
-                        <div>${renderFields(details.extraFields)}</div>
-                      </div>` :
-            `${renderFields(details.extraFields)}`}
-                  </div>
+          <div class="card">
+            <div style="background-color: rgba(196,230,248,1); border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">
+              <div style="flex-shrink: 0; margin-right: 10px;">
+                <div style="display: flex; gap: 8px;">
+                  <img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />
+                  ${partnerCid ? `<img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />` : ''}
                 </div>
               </div>
-            `;
+              <div>
+                <h3 style="margin: 0 0 4px 0; font-size: 16px;">${toTitleCase(details.name) || ''}</h3>
+                ${sideBySide && toTitleCase(details.partnerName) ? `
+                  <div style="display: flex; gap: 40px;">
+                    <div>${renderFields(details.extraFields)}</div>
+                  </div>` :
+          `${renderFields(details.extraFields)}`}
+              </div>
+            </div>
+          </div>
+        `;
       }
 
       html += '</div>';
@@ -218,25 +217,54 @@ export async function POST(request) {
     }), true);
 
     htmlTable += `
-  <hr style="margin: 40px 0;" />
-  <div style="font-family: Arial, sans-serif; font-size: 14px; color: #555;">
-    <p>With best wishes and regards,<br />
-    <strong>District Secretariat 2025-2026</strong></p>
-    <div style="text-align: center; margin-top: 20px;">
-      <p>
-        <em>Designed and Maintained by</em>
-        <strong>Tirupati Balaji Advertising & Marketing</strong><br />
-        (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava<br />
-        Founder and Charter President of RC Indirapuram Galore, District Club Co-ordinator)
-      </p>
-    </div>
-  </div>
-</div>
-</body></html>
-`;
+      <hr style="margin: 40px 0;" />
+      <div style="font-family: Arial, sans-serif; font-size: 14px; color: #555;">
+        <p>With best wishes and regards,<br />
+        <strong>Rtn CA NK Bhargava and Rtn Meenu Bhargava</strong>
+        District family of Rotary Chair</p>
+    `;
 
-    //const listofreciever= await fetchreciever();
-    //console.log(listofreciever);
+    // ADDITION: Below Regards Images
+    const belowImages = ['001.jpg', '002.jpg'];
+    let belowImagesHtml = '<div style="text-align: center; display: flex; justify-content: center; gap: 10px;">';
+
+    for (const imgName of belowImages) {
+      const file = files.find(f => f.name === imgName);
+      if (file) {
+        const buffer = await new Promise((resolve, reject) => {
+          const chunks = [];
+          file.download()
+            .on('data', chunk => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
+
+        const cid = `below-image-${imgName}`;
+        attachments.push({
+          filename: imgName,
+          content: buffer,
+          cid: cid,
+        });
+
+        belowImagesHtml += `<img src="cid:${cid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />`;
+      }
+    }
+
+    belowImagesHtml += '</div>';
+    htmlTable += belowImagesHtml;
+    htmlTable += `
+      <div style="text-align: center; margin-top: 20px;">
+          <p>
+            <em>Designed and Maintained by</em>
+            <strong>Tirupati Balaji Advertising & Marketing</strong><br />
+            (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava<br />
+            Founder and Charter President of RC Indirapuram Galore, District Club Co-ordinator)
+          </p>
+        </div>
+      </div>
+    `;
+
+    htmlTable += '</div></body></html>';
 
     // ✅ Elastic Email SMTP configuration
     const transporter = nodemailer.createTransport({
@@ -269,25 +297,6 @@ export async function POST(request) {
       { message: error.message || 'Failed to send email' },
       { status: 500 }
     );
-  }
-}
-
-async function fetchreciever() {
-  try {
-    let query = supabase.from('user').select('email').neq('email', 'NULL');
-    const { data, error } = await query;
-    if (error) {
-      console.error("Supabase query for reciever error:", error);
-      throw error;
-    }
-
-    if (!data || data.length == 0) {
-      return [];
-    }
-    return data;
-  } catch (err) {
-    console.error("fetchByType error:", err);
-    return [];
   }
 }
 
@@ -328,7 +337,6 @@ async function fetchByType(date, type) {
       return [];
     }
 
-    // Remove duplicate anniversary pairs
     if (type === 'anniversary') {
       const uniquePairs = new Set();
       return data.filter(item => {
