@@ -47,7 +47,7 @@ export async function GET(request) {
     if (filterType === "birthday" && type === "member") {
       query = supabase
         .from("user")
-        .select("id, name, club, phone, email, dob, profile")
+        .select("id, name, club, phone, email, dob, profile,poster,tbam")
         .eq("type", "member")
         .gte("dob", from_date)
         .lte("dob", to_date)
@@ -55,7 +55,7 @@ export async function GET(request) {
     } else if (filterType === "birthday" && type === "spouse") {
       query = supabase
         .from("user")
-        .select(`id, name, club, phone, email, dob, profile, partner:partner_id (id,name)`)
+        .select(`id, name, club, phone, email, dob, profile,poster,tbam, partner:partner_id (id,name)`)
         .eq("type", "spouse")
         .gte("dob", from_date)
         .lte("dob", to_date)
@@ -63,7 +63,7 @@ export async function GET(request) {
     } else {
       query = supabase
         .from("user")
-        .select(`id, name, type, email, phone, anniversary, profile, partner:partner_id (id, name, type, profile)`)
+        .select(`id, name, type, email, phone, anniversary, profile,annposter,tbam, partner:partner_id (id, name, type, profile)`)
         .eq("type", "member")
         .gte("anniversary", from_date)
         .lte("anniversary", to_date)
@@ -73,7 +73,7 @@ export async function GET(request) {
     const { data, error } = await query;
     if (error) {
       if (error.code === "42P01") return Response.json({ message: "Table not found" }, { status: 404 });
-        error("Supabase query error:", error);
+      error("Supabase query error:", error);
       throw error;
     }
 

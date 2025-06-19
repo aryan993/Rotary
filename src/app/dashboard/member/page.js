@@ -8,8 +8,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import {
   getCurrentDate,
   getNextMonthDate,
-  formatMonthDay,
-  handleDownload
+  formatMonthDay
 } from "../../../lib/utils";
 import UserDetailModal from "../../components/UserDetailModal";
 
@@ -20,16 +19,9 @@ export default function User() {
 
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [fileInputRef] = useState(useRef(null));
-  const [selectedId, setSelectedId] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('');
   const [fromDate, setFromDate] = useState(getCurrentDate());
   const [toDate, setToDate] = useState(getNextMonthDate());
   const [modalId, setModalId] = useState(null);
-
   const [filterColumn, setFilterColumn] = useState("name");
   const [filterValue, setFilterValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,63 +43,18 @@ export default function User() {
   }, [fetchdata]);
 
   useEffect(() => {
-  if (!Array.isArray(data)) {
-    setFilteredData([]);
-    return;
-  }
-
-  const filtered = data.filter((row) =>
-    row[filterColumn]?.toLowerCase().includes(filterValue.toLowerCase())
-  );
-  setFilteredData(filtered);
-  setCurrentPage(1);
-}, [data, filterColumn, filterValue]);
-
-  const handleUploadClick = (id) => {
-    setSelectedId(id);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !selectedId) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5 MB.");
+    if (!Array.isArray(data)) {
+      setFilteredData([]);
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("id", selectedId);
+    const filtered = data.filter((row) =>
+      row[filterColumn]?.toLowerCase().includes(filterValue.toLowerCase())
+    );
+    setFilteredData(filtered);
+    setCurrentPage(1);
+  }, [data, filterColumn, filterValue]);
 
-    try {
-      setUploading(true);
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      console.log("hi")
-      if (!response.ok) throw new Error("Upload failed");
-      alert("File uploaded successfully");
-
-      // Update local data to reflect profile = true
-      setData((prev) =>
-        prev.map((row) =>
-          row.id === selectedId ? { ...row, profile: true } : row
-        )
-      );
-
-      fetchdata(); // Optional re-fetch
-    } catch (error) {
-      console.error("Upload error:", error);
-      alert("Upload failed");
-    } finally {
-      setUploading(false);
-      setSelectedId(null);
-    }
-  };
 
   const handleRowClick = (e, id) => {
     if (
@@ -188,14 +135,6 @@ export default function User() {
         </button>
       </div>
 
-      {message && (
-        <div className={`mb-4 px-4 py-2 rounded ${messageType === 'success'
-          ? 'bg-green-100 text-green-700'
-          : 'bg-red-100 text-red-700'
-          }`}>
-          {message}
-        </div>
-      )}
 
       <div className="overflow-x-auto border border-gray-300 rounded-lg">
         <table className="min-w-full table-auto text-sm text-left border-collapse">
@@ -205,65 +144,50 @@ export default function User() {
               <th className="border px-4 py-2">Email</th>
               <th className="border px-4 py-2">Phone</th>
               <th className="border px-4 py-2">Birthday</th>
-              <th className="border px-4 py-2">Upload</th>
-              <th className="border px-4 py-2">Download</th>
+              <th className="border px-4 py-2">Profile</th>
+              <th className="border px-4 py-2">Poster </th>
             </tr>
           </thead>
           <tbody>
-  {paginatedData.length === 0 ? (
-    <tr>
-      <td colSpan="6" className="text-center px-4 py-6 text-gray-500">
-        No users found.
-      </td>
-    </tr>
-  ) : (
-    paginatedData.map((row, idx) => (
-      <tr
-        key={row.id}
-        onClick={(e) => handleRowClick(e, row.id)}
-        className={`cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
-      >
-        <td className="border px-4 py-2">{row.name}</td>
-        <td className="border px-4 py-2">{row.email}</td>
-        <td className="border px-4 py-2">{row.phone}</td>
-        <td className="border px-4 py-2">{formatMonthDay(row.dob)}</td>
-        <td className="border px-4 py-2">
-          <button
-            onClick={() => handleUploadClick(row.id)}
-            className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
-              ${row.profile ? 'bg-green-600' : 'bg-red-600'}
-              ${uploading && selectedId === row.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={uploading}
-          >
-            {uploading && selectedId === row.id ? "Uploading..." : "Upload"}
-          </button>
-        </td>
-        <td className="border px-4 py-2">
-          <button
-            onClick={() =>
-              handleDownload(`${row.id}.jpg`, setMessage, setMessageType, setIsLoading)
-            }
-            className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
-              ${row.profile ? 'bg-green-600' : 'bg-red-600'}
-              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={isLoading}
-          >
-            {isLoading ? "Downloading..." : "Download"}
-          </button>
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
+            {paginatedData.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="text-center px-4 py-6 text-gray-500">
+                  No users found.
+                </td>
+              </tr>
+            ) : (
+              paginatedData.map((row, idx) => (
+                <tr
+                  key={row.id}
+                  onClick={(e) => handleRowClick(e, row.id)}
+                  className={`cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
+                >
+                  <td className="border px-4 py-2">{row.name}</td>
+                  <td className="border px-4 py-2">{row.email}</td>
+                  <td className="border px-4 py-2">{row.phone}</td>
+                  <td className="border px-4 py-2">{formatMonthDay(row.dob)}</td>
+                  <td className="border px-4 py-2">
+                    <button
+                      className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
+              ${row.profile ? 'bg-green-600' : 'bg-red-600'}`}
+                    >
+                      {row.profile ? 'Uploaded' : 'Missing'}
+                    </button>
+                  </td>
+                  <td className="border px-4 py-2">
+                    <button
+                      className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
+              ${row.poster ? 'bg-green-600' : 'bg-red-600'}`}
+                    >
+                      {row.poster ? 'Uploaded' : 'Missing'}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
 
         </table>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={handleFileChange}
-          disabled={uploading}
-        />
       </div>
 
       <div className="flex justify-between items-center mt-4">
@@ -287,14 +211,14 @@ export default function User() {
       </div>
 
       {modalId && (
-  <UserDetailModal
-    id={modalId}
-    onClose={() => {
-      setModalId(null);
-      fetchdata();  // Refresh page on modal close
-    }}
-  />
-)}
+        <UserDetailModal
+          id={modalId}
+          onClose={() => {
+            setModalId(null);
+            fetchdata();  // Refresh page on modal close
+          }}
+        />
+      )}
 
     </div>
   );

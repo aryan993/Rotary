@@ -6,8 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import {
   getCurrentDate,
   getNextMonthDate,
-  formatMonthDay,
-  handleDownload
+  formatMonthDay
 } from "../../../lib/utils";
 import UserDetailModal from "../../components/UserDetailModal";
 
@@ -18,11 +17,6 @@ export default function User() {
   const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  const fileInputRef = useRef(null);
-  const [selectedId, setSelectedId] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [fromDate, setFromDate] = useState(getCurrentDate());
@@ -49,9 +43,9 @@ export default function User() {
 
   useEffect(() => {
     if (!Array.isArray(data)) {
-    setFilteredData([]);
-    return;
-  }
+      setFilteredData([]);
+      return;
+    }
     let result = data;
     if (filterValue.trim()) {
       result = data.filter((row) =>
@@ -67,48 +61,6 @@ export default function User() {
     currentPage * itemsPerPage
   );
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
-  const handleUploadClick = (id) => {
-    setSelectedId(id);
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !selectedId) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size should not exceed 5MB");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("id", selectedId);
-
-    try {
-      setUploading(true);
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Upload failed");
-
-      alert("File uploaded successfully");
-
-      // Optionally refresh data
-      await fetchData();
-    } catch (error) {
-      console.error("Upload error:", error);
-      alert("Upload failed");
-    } finally {
-      setUploading(false);
-      setSelectedId(null);
-    }
-  };
 
   const handleRowClick = (e, id) => {
     if (e.target.tagName !== "BUTTON" && !e.target.closest("button")) {
@@ -193,8 +145,8 @@ export default function User() {
               <th className="border px-4 py-2">Phone</th>
               <th className="border px-4 py-2">Birthday</th>
               <th className="border px-4 py-2">Member</th>
-              <th className="border px-4 py-2">Upload</th>
-              <th className="border px-4 py-2">Download</th>
+              <th className="border px-4 py-2">Profile</th>
+              <th className="border px-4 py-2">Poster</th>
             </tr>
           </thead>
           <tbody>
@@ -211,14 +163,10 @@ export default function User() {
                 <td className="border px-4 py-2">{row?.partner?.name}</td>
                 <td className="border px-4 py-2">
                   <button
-                    onClick={() => handleUploadClick(row.id)}
                     className={`px-4 py-2 rounded-md font-semibold text-white transition-all duration-200
                       ${row.profile ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
-                      ${uploading && selectedId === row.id ? 'opacity-50 cursor-not-allowed' : ''}
                     `}
-                    disabled={uploading}
-                  >
-                    {uploading && selectedId === row.id ? "Uploading..." : "Upload"}
+                  >{row.profile ? 'Uploaded' : 'Missing'}
                   </button>
                 </td>
                 <td className="border px-4 py-2">
@@ -232,25 +180,16 @@ export default function User() {
                       )
                     }
                     className={`px-4 py-2 rounded-md font-semibold text-white transition-all duration-200
-                      ${row.profile ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
-                      ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                      ${row.poster ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
                     `}
-                    disabled={isLoading}
                   >
-                    {isLoading ? "Downloading..." : "Download"}
+                    {row.poster ? 'Uploaded' : 'Missing'}
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={handleFileChange}
-          disabled={uploading}
-        />
       </div>
 
       <div className="mt-4 flex justify-center gap-2">
@@ -271,7 +210,7 @@ export default function User() {
         </button>
       </div>
 
-            {modalId && (
+      {modalId && (
         <UserDetailModal
           id={modalId}
           onClose={() => {
