@@ -220,45 +220,13 @@ export async function POST(request) {
       <hr style="margin: 40px 0;" />
       <div style="font-family: Arial, sans-serif; font-size: 14px; color: #555;">
         <p>With best wishes and regards,<br />
-        <strong>Rtn CA NK Bhargava and Rtn Meenu Bhargava</strong>
-        District family of Rotary Chair</p>
-    `;
-
-    // ADDITION: Below Regards Images
-    const belowImages = ['001.jpg', '002.jpg'];
-    let belowImagesHtml = '<div style="text-align: center; display: flex; justify-content: center; gap: 10px;">';
-
-    for (const imgName of belowImages) {
-      const file = files.find(f => f.name === imgName);
-      if (file) {
-        const buffer = await new Promise((resolve, reject) => {
-          const chunks = [];
-          file.download()
-            .on('data', chunk => chunks.push(chunk))
-            .on('end', () => resolve(Buffer.concat(chunks)))
-            .on('error', reject);
-        });
-
-        const cid = `below-image-${imgName}`;
-        attachments.push({
-          filename: imgName,
-          content: buffer,
-          cid: cid,
-        });
-
-        belowImagesHtml += `<img src="cid:${cid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />`;
-      }
-    }
-
-    belowImagesHtml += '</div>';
-    htmlTable += belowImagesHtml;
-    htmlTable += `
+        <strong>Team Influencer 2025-26</strong>
       <div style="text-align: center; margin-top: 20px;">
           <p>
             <em>Designed and Maintained by</em>
             <strong>Tirupati Balaji Advertising & Marketing</strong><br />
             (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava<br />
-            Founder and Charter President of RC Indirapuram Galore, District Club Co-ordinator)
+            Founder and Charter President of RC Indirapuram Galore)
           </p>
         </div>
       </div>
