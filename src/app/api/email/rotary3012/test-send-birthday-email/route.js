@@ -2,6 +2,7 @@
 import { Storage } from 'megajs';
 import nodemailer from 'nodemailer';
 import { supabase } from "@/app/utils/dbconnect";
+import { formatFullDate } from "@/lib/utils";
 
 export async function POST(request) {
   try {
@@ -51,7 +52,7 @@ export async function POST(request) {
         cid: congratsCid,
       });
     }
-    const year = new Date().getFullYear();
+    const today = formatFullDate(date)
 
     let htmlTable = `
     <!DOCTYPE html>
@@ -79,7 +80,7 @@ export async function POST(request) {
       if (!records || records.length === 0) return '';
 
       let html = `
-        <h2 style="font-family: Arial, sans-serif;">${title} on ${date.slice(5)}-${year}</h2>
+        <h2 style="font-family: Arial, sans-serif;">${title} on ${today}</h2>
         <style>
           .card-container {
             display: flex;
@@ -299,9 +300,10 @@ export async function POST(request) {
     </p>
 
     <div style="display: flex; justify-content: center; gap: 20px; margin: 10px 0;">
-      ${logo006Cid ? `<img src="cid:${logo006Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
-      ${logo008Cid ? `<img src="cid:${logo008Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
-      ${logo009Cid ? `<img src="cid:${logo009Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
+    ${logo009Cid ? `<img src="cid:${logo009Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}  
+    ${logo006Cid ? `<img src="cid:${logo006Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
+    ${logo008Cid ? `<img src="cid:${logo008Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
+      
     </div>
 
     <div style="margin-top: 20px;">
@@ -344,7 +346,7 @@ export async function POST(request) {
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
         to: recipient,  // send to one person at a time
         replyTo: 'rtndramitaanilmohindru@gmail.com',
-        subject: `Birthday and Anniversary Notification ${date.slice(8)}-${date.slice(5, 7)}-${year}`,
+        subject: `Birthday and Anniversary Notification ${today}`,
         html: htmlTable,
         attachments,
       });

@@ -74,8 +74,8 @@ export function formatFullDate(dateStr) {
 
   const day = date.getDate();
   const month = date.toLocaleString("en-US", { month: "long" });
-  const year = date.getFullYear();
-
+  const year = new Date().getFullYear();
+    
   // Suffix logic
   const suffix =
     day % 10 === 1 && day !== 11
@@ -86,5 +86,5 @@ export function formatFullDate(dateStr) {
       ? "rd"
       : "th";
 
-  return `${day}${suffix} ${month} ${year}`;
+  return `${day}<sup>${suffix}</sup> ${month} ${year}`;
 }
