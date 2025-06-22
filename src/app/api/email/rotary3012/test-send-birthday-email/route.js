@@ -388,7 +388,8 @@ async function fetchByType(date, type) {
         .select('id,name,club,email,phone,role,partner:partner_id (id,name,club,email,phone)')
         .eq('type', 'member')
         .eq('anniversary', date)
-        .eq('active', 'True');
+        .eq('active', 'True')
+        .eq('partner.active','True');
     } else {
       throw new Error("Invalid type provided");
     }
