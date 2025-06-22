@@ -21,7 +21,7 @@ export async function POST(request) {
       fetchByType(date, 'member'),
       fetchByType(date, 'spouse'),
       fetchByType(date, 'anniversary'),
-    ]); 
+    ]);
 
     const storage = new Storage({ email: MEGA_EMAIL, password: MEGA_PASSWORD });
     await new Promise((resolve, reject) => {
@@ -69,7 +69,7 @@ export async function POST(request) {
             </div>` : ''}
             <p>Dear Esteemed Rotary Leaders,</p>
             <p>Warm greetings from the Rotary family of District 3012!</p>
-            <p>On behalf of District Governor <strong>Rtn. Dr. Amita Mohindru</strong> and the distinguished <strong>Rtn. Dr. Capt. Anil Mohindru</strong>, we take great pleasure in extending our heartfelt wishes to all those celebrating their birthdays and anniversaries today.</p>
+            <p>On behalf of District Governor <strong>Rtn. Dr. Amita Mohindru</strong> and the distinguished <strong>Rtn. Dr. Capt. Anil Mohindru</strong>, we take great pleasure in extending our heartfelt wishes to all those celebrating their birthdays and wedding anniversaries today.</p>
             <p>May your day be filled with joy, good health, and cherished moments of togetherness. This simple gesture is a celebration of the spirit of fellowship that binds us all.</p>
             <p>Stay blessed, stay healthy, and keep inspiring!</p>
           </div>
@@ -196,7 +196,7 @@ export async function POST(request) {
       ],
     }));
 
-    htmlTable += await generateCardsSection("Spouse's Birthdays", spouseBirthdays, (record) => ({
+    htmlTable += await generateCardsSection("Partner's Birthdays", spouseBirthdays, (record) => ({
       name: record.name || '',
       extraFields: [
         { label: "Partner:", value: record?.partner?.name },
@@ -216,21 +216,113 @@ export async function POST(request) {
       partnerName: record?.partner?.name || '',
     }), true);
 
+    // Fetch 006.jpg (logo below "Team Influencer 2025-26")
+    const logo006 = files.find(f => f.name === '006.jpg');
+    let logo006Cid = '';
+    if (logo006) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        logo006.download()
+          .on('data', chunk => chunks.push(chunk))
+          .on('end', () => resolve(Buffer.concat(chunks)))
+          .on('error', reject);
+      });
+      logo006Cid = 'logo-006';
+      attachments.push({
+        filename: logo006.name,
+        content: buffer,
+        cid: logo006Cid,
+      });
+    }
+
+    // Fetch 007.jpg (logo before "Designed and Maintained by")
+    const logo007 = files.find(f => f.name === '007.jpg');
+    let logo007Cid = '';
+    if (logo007) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        logo007.download()
+          .on('data', chunk => chunks.push(chunk))
+          .on('end', () => resolve(Buffer.concat(chunks)))
+          .on('error', reject);
+      });
+      logo007Cid = 'logo-007';
+      attachments.push({
+        filename: logo007.name,
+        content: buffer,
+        cid: logo007Cid,
+      });
+    }
+
+    // Fetch 008.jpg (logo before "Designed and Maintained by")
+    const logo008 = files.find(f => f.name === '008.jpg');
+    let logo008Cid = '';
+    if (logo008) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        logo008.download()
+          .on('data', chunk => chunks.push(chunk))
+          .on('end', () => resolve(Buffer.concat(chunks)))
+          .on('error', reject);
+      });
+      logo008Cid = 'logo-008';
+      attachments.push({
+        filename: logo008.name,
+        content: buffer,
+        cid: logo008Cid,
+      });
+    }
+    // Fetch 009.jpg (logo before "Designed and Maintained by")
+    const logo009 = files.find(f => f.name === '009.jpg');
+    let logo009Cid = '';
+    if (logo009) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        logo009.download()
+          .on('data', chunk => chunks.push(chunk))
+          .on('end', () => resolve(Buffer.concat(chunks)))
+          .on('error', reject);
+      });
+      logo009Cid = 'logo-009';
+      attachments.push({
+        filename: logo009.name,
+        content: buffer,
+        cid: logo009Cid,
+      });
+    }
+
     htmlTable += `
-      <hr style="margin: 40px 0;" />
-      <div style="font-family: Arial, sans-serif; font-size: 14px; color: #555;">
-        <p>With best wishes and regards,<br />
-        <strong>Team Influencer 2025-26</strong>
-      <div style="text-align: center; margin-top: 20px;">
-          <p>
-            <em>Designed and Maintained by</em>
-            <strong>Tirupati Balaji Advertising & Marketing</strong><br />
-            (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava<br />
-            Founder and Charter President of RC Indirapuram Galore)
-          </p>
-        </div>
-      </div>
-    `;
+  <hr style="margin: 40px 0;" />
+  <div style="font-family: Arial, sans-serif; font-size: 14px; color: #555;">
+    <p>With best wishes and regards,<br />
+      <strong>Team Influencer 2025-26</strong>
+    </p>
+
+    <div style="display: flex; justify-content: center; gap: 20px; margin: 10px 0;">
+      ${logo006Cid ? `<img src="cid:${logo006Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
+      ${logo008Cid ? `<img src="cid:${logo008Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
+      ${logo009Cid ? `<img src="cid:${logo009Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
+    </div>
+
+    <div style="margin-top: 20px;">
+      <table style="border-collapse: collapse; margin: 0 auto;">
+        <tr>
+          <td style="padding: 10px; border: none;">
+            ${logo007Cid ? `<img src="cid:${logo007Cid}" style="max-height: 60px;" alt="TBAM Logo" />` : ''}
+          </td>
+          <td style="border-left: 1px solid black; padding: 10px; vertical-align: middle; border-top: none; border-bottom: none; border-right: none;">
+            <p style="margin: 0;">
+              <em>Designed and Maintained by</em><br />
+              <strong>Tirupati Balaji Advertising & Marketing</strong><br />
+              (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava)<br />
+              Founder and Charter President of RC Indirapuram Galore
+            </p>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+`;
 
     htmlTable += '</div></body></html>';
 
@@ -256,7 +348,7 @@ export async function POST(request) {
         html: htmlTable,
         attachments,
       });
-      console.log("email send to "+recipient)
+      console.log("email send to " + recipient)
     }
 
     return Response.json({
