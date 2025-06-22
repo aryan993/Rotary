@@ -1,14 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 function Navbar() {
   const router = useRouter();
+  const [selectedValue, setSelectedValue] = useState('');
 
   const handleEmailChange = (e) => {
     const selected = e.target.value;
+    setSelectedValue(''); // Reset to allow re-selection
     if (selected === 'rotary3012') {
       router.push('/dashboard/emailsend/rotary3012');
     } else if (selected === 'tbam') {
@@ -33,10 +35,11 @@ function Navbar() {
           </li>
           <li>
             <select
-              defaultValue="rotary3012"
+              value={selectedValue}
               onChange={handleEmailChange}
               className="bg-blue-600 text-white border border-white rounded px-2 py-1 cursor-pointer hover:bg-blue-700 focus:outline-none"
             >
+              <option value="" disabled>Select Email Group</option>
               <option value="rotary3012">Rotary3012</option>
               <option value="tbam">TBAM</option>
             </select>
