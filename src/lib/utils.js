@@ -86,5 +86,5 @@ export function formatFullDate(dateStr) {
       ? "rd"
       : "th";
 
-  return `${day}<sup>${suffix}</sup> ${month} ${year}`;
+  return `${day}${suffix} ${month} ${year}`;
 }
