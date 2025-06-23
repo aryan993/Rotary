@@ -5,7 +5,6 @@ import Image from "next/image";
 
 export default function UserDetailModal({ id, onClose }) {
   const [user, setUser] = useState(null);
-  const [editable, setEditable] = useState(false);
   const [formData, setFormData] = useState(null);
   const [userImageUrl, setUserImageUrl] = useState(null);
   const [partnerImageUrl, setPartnerImageUrl] = useState(null);
@@ -59,7 +58,7 @@ export default function UserDetailModal({ id, onClose }) {
 
   const fetchImage = async (filename) => {
     try {
-      const res = await fetch(`/api/image?filename=${filename}&cacheBust=${Date.now()}`);
+      const res = await fetch(`/api/profile/image?filename=${filename}&cacheBust=${Date.now()}`);
       if (!res.ok) return null;
       const blob = await res.blob();
       return URL.createObjectURL(blob);
@@ -105,7 +104,7 @@ export default function UserDetailModal({ id, onClose }) {
     const setLoading = isUser ? setIsDownloadingUser : setIsDownloadingPartner;
     try {
       setLoading(true);
-      const res = await fetch("/api/download", {
+      const res = await fetch("/api/profile/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileName: `${userId}.jpg` }),
@@ -128,7 +127,6 @@ export default function UserDetailModal({ id, onClose }) {
   const handlePosterDownload = async (userId, isUser = true) => {
     const setLoading = isUser ? setIsDownloadingUserPoster : setIsDownloadingPartnerPoster;
     try {
-      console.log(userId)
       setLoading(true);
       const res = await fetch("/api/poster/download", {
         method: "POST",
@@ -167,14 +165,14 @@ export default function UserDetailModal({ id, onClose }) {
         const f = new FormData();
         f.append("file", userImageFile);
         f.append("id", user.id);
-        uploads.push(fetch("/api/upload", { method: "POST", body: f }));
+        uploads.push(fetch("/api/profile/upload", { method: "POST", body: f }));
       }
 
       if (partnerImageFile && user.partner?.id) {
         const f = new FormData();
         f.append("file", partnerImageFile);
         f.append("id", user.partner.id);
-        uploads.push(fetch("/api/upload", { method: "POST", body: f }));
+        uploads.push(fetch("/api/profile/upload", { method: "POST", body: f }));
       }
 
       if (userPosterFile) {
@@ -192,7 +190,6 @@ export default function UserDetailModal({ id, onClose }) {
       }
 
       await Promise.all(uploads);
-
       onClose();
     } catch (err) {
       alert("Submit failed");
@@ -201,12 +198,23 @@ export default function UserDetailModal({ id, onClose }) {
     }
   };
 
+  const handleInputChange = (path, value) => {
+    setFormData((prev) => {
+      const newData = { ...prev };
+      const keys = path.split(".");
+      let obj = newData;
+      for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+      obj[keys.at(-1)] = value;
+      return newData;
+    });
+  };
+
   const renderImage = (url, alt, userId, isUser = true, isLoading = false) => {
     const isDownloading = isUser ? isDownloadingUser : isDownloadingPartner;
     return (
       <div className="text-center w-24">
         <label className="block cursor-pointer">
-          <input type="file" accept="image/*" hidden disabled={!editable} onChange={(e) => handleImageSelect(e, isUser)} />
+          <input type="file" accept="image/*" hidden onChange={(e) => handleImageSelect(e, isUser)} />
           <div className="w-24 h-24 border rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
             {isLoading ? <span className="text-xs">Loading...</span> : url ? (
               <Image src={url} alt={alt} width={96} height={96} className="object-cover" unoptimized />
@@ -216,7 +224,7 @@ export default function UserDetailModal({ id, onClose }) {
         <div className="mt-2 text-xs">
           <div><strong>ID:</strong> {userId}</div>
           <label className="flex justify-center items-center gap-1 mt-1">
-            <input type="checkbox" checked={isUser ? formData.active : formData.partner?.active} disabled={!editable}
+            <input type="checkbox" checked={isUser ? formData.active : formData.partner?.active}
               onChange={(e) => handleInputChange(isUser ? "active" : "partner.active", e.target.checked)} />
             Active
           </label>
@@ -234,7 +242,7 @@ export default function UserDetailModal({ id, onClose }) {
     return (
       <div className="text-center w-32">
         <label className="block cursor-pointer">
-          <input type="file" accept="image/*" hidden disabled={!editable} onChange={(e) => handlePosterSelect(e, isUser)} />
+          <input type="file" accept="image/*" hidden onChange={(e) => handlePosterSelect(e, isUser)} />
           <div className="w-32 h-48 border rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
             {loading ? <span className="text-xs">Loading...</span> : url ? (
               <Image src={url} alt={alt} width={128} height={192} className="object-cover" unoptimized />
@@ -249,17 +257,6 @@ export default function UserDetailModal({ id, onClose }) {
     );
   };
 
-  const handleInputChange = (path, value) => {
-    setFormData(prev => {
-      const newData = { ...prev };
-      const keys = path.split(".");
-      let obj = newData;
-      for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
-      obj[keys.at(-1)] = value;
-      return newData;
-    });
-  };
-
   const renderDateInputs = (path) => {
     const value = path.split(".").reduce((acc, key) => acc?.[key], formData) || "";
     const [, month = "", day = ""] = value.split("-");
@@ -267,13 +264,11 @@ export default function UserDetailModal({ id, onClose }) {
     const days = [...Array(31)].map((_, i) => i + 1);
     return (
       <div className="flex gap-2">
-        <select value={+day || ""} disabled={!editable} onChange={e => updateDate("day", e.target.value)}
-          className="w-1/2 border p-1 rounded text-sm">
-          <option value="">Day</option>{days.map(d => <option key={d} value={d}>{d}</option>)}
+        <select value={+day || ""} onChange={(e) => updateDate("day", e.target.value)} className="w-1/2 border p-1 rounded text-sm">
+          <option value="">Day</option>{days.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
-        <select value={+month || ""} disabled={!editable} onChange={e => updateDate("month", e.target.value)}
-          className="w-1/2 border p-1 rounded text-sm">
-          <option value="">Month</option>{months.map(m => <option key={m} value={m}>{m}</option>)}
+        <select value={+month || ""} onChange={(e) => updateDate("month", e.target.value)} className="w-1/2 border p-1 rounded text-sm">
+          <option value="">Month</option>{months.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
       </div>
     );
@@ -292,49 +287,43 @@ export default function UserDetailModal({ id, onClose }) {
         <button onClick={onClose} className="absolute top-2 right-2 text-xl">✕</button>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">User Details</h2>
-          <label className="flex items-center text-sm">
-            <input type="checkbox" className="mr-2" checked={editable} onChange={() => setEditable(!editable)} /> Edit
-          </label>
         </div>
         <form onSubmit={handleSubmit} className="space-y-8 text-sm">
-
-          {/* USER ROW */}
           <div className="grid grid-cols-6 gap-4 items-start">
             <div className="col-span-1">{renderImage(userImageUrl, "User", user.id, true, userImageLoading)}</div>
             <div className="col-span-4 grid grid-cols-3 gap-3">
-              <Input label="Name" path="name" value={formData.name} editable={editable} onChange={handleInputChange} />
-              <Select label="Role" path="role" value={formData.role} editable={editable} onChange={handleInputChange}
+              <Input label="Name" path="name" value={formData.name} onChange={handleInputChange} />
+              <Select label="Role" path="role" value={formData.role} onChange={handleInputChange}
                 options={["District Team", "Influencer President", "Influencer Secretary"]} />
-              <Select label="Type" path="type" value={formData.type} editable={editable} onChange={handleInputChange}
+              <Select label="Type" path="type" value={formData.type} onChange={handleInputChange}
                 options={["member", "spouse"]} />
-              <Input label="Club" path="club" value={formData.club} editable={editable} onChange={handleInputChange} />
-              <Input label="Email" path="email" value={formData.email} editable={editable} onChange={handleInputChange} />
-              <Input label="Phone" path="phone" value={formData.phone} editable={editable} onChange={handleInputChange} />
+              <Input label="Club" path="club" value={formData.club} onChange={handleInputChange} />
+              <Input label="Email" path="email" value={formData.email} onChange={handleInputChange} />
+              <Input label="Phone" path="phone" value={formData.phone} onChange={handleInputChange} />
               <div><Label text="DOB" />{renderDateInputs("dob")}</div>
               <div><Label text="Anniversary" />{renderDateInputs("anniversary")}</div>
             </div>
             <div className="col-span-1">{renderPoster(userPosterUrl, "User Poster", user.id, true, userPosterLoading)}</div>
           </div>
 
-          {/* PARTNER ROW */}
           <div className="grid grid-cols-6 gap-4 items-start">
             <div className="col-span-1">{renderImage(partnerImageUrl, "Partner", user.partner?.id, false, partnerImageLoading)}</div>
             <div className="col-span-4 grid grid-cols-3 gap-3">
-              <Input label="Name" path="partner.name" value={formData.partner.name} editable={editable} onChange={handleInputChange} />
-              <Select label="Role" path="partner.role" value={formData.partner.role} editable={editable} onChange={handleInputChange}
+              <Input label="Name" path="partner.name" value={formData.partner.name} onChange={handleInputChange} />
+              <Select label="Role" path="partner.role" value={formData.partner.role} onChange={handleInputChange}
                 options={["District Team", "Influencer President", "Influencer Secretary"]} />
-              <Select label="Type" path="partner.type" value={formData.partner.type} editable={editable} onChange={handleInputChange}
+              <Select label="Type" path="partner.type" value={formData.partner.type} onChange={handleInputChange}
                 options={["member", "spouse"]} />
-              <Input label="Club" path="partner.club" value={formData.partner.club} editable={editable} onChange={handleInputChange} />
-              <Input label="Email" path="partner.email" value={formData.partner.email} editable={editable} onChange={handleInputChange} />
-              <Input label="Phone" path="partner.phone" value={formData.partner.phone} editable={editable} onChange={handleInputChange} />
+              <Input label="Club" path="partner.club" value={formData.partner.club} onChange={handleInputChange} />
+              <Input label="Email" path="partner.email" value={formData.partner.email} onChange={handleInputChange} />
+              <Input label="Phone" path="partner.phone" value={formData.partner.phone} onChange={handleInputChange} />
               <div><Label text="DOB" />{renderDateInputs("partner.dob")}</div>
             </div>
             <div className="col-span-1">{renderPoster(partnerPosterUrl, "Partner Poster", user.partner?.id, false, partnerPosterLoading)}</div>
           </div>
 
           <div className="text-center pt-4">
-            <button type="submit" disabled={!editable || isSubmitting}
+            <button type="submit" disabled={isSubmitting}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
               {isSubmitting ? "Updating..." : "Save"}
             </button>
@@ -345,21 +334,21 @@ export default function UserDetailModal({ id, onClose }) {
   );
 }
 
-function Input({ label, path, value, editable, onChange }) {
+function Input({ label, path, value, onChange }) {
   return (
     <div>
       <Label text={label} />
-      <input type="text" value={value || ""} disabled={!editable} onChange={(e) => onChange(path, e.target.value)}
+      <input type="text" value={value || ""} onChange={(e) => onChange(path, e.target.value)}
         className="w-full border p-1 rounded text-sm" />
     </div>
   );
 }
 
-function Select({ label, path, value, editable, onChange, options }) {
+function Select({ label, path, value, onChange, options }) {
   return (
     <div>
       <Label text={label} />
-      <select value={value} onChange={(e) => onChange(path, e.target.value)} disabled={!editable}
+      <select value={value} onChange={(e) => onChange(path, e.target.value)}
         className="w-full border border-black rounded-md p-1.5">
         {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
       </select>

@@ -119,7 +119,15 @@ export default function User() {
         </button>
       </div>
 
-      {modalId && <UserDetailModal id={modalId} onClose={() => setModalId(null)} />}
+      {modalId && (
+        <UserDetailModal
+          id={modalId}
+          onClose={() => {
+            setModalId(null);
+            fetchData(); // refetch data when modal is closed
+          }}
+        />
+      )}
     </div>
   );
 }
