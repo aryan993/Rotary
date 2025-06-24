@@ -31,44 +31,83 @@ export default function UserDetailModal({ id, onClose }) {
   const [userAnnivPosterLoading, setUserAnnivPosterLoading] = useState(true);
   const [partnerAnnivPosterLoading, setPartnerAnnivPosterLoading] = useState(true);
 
-
+useEffect(() => {
+  if (id) {
+    setUserImageUrl(null);
+    setPartnerImageUrl(null);
+    setUserPosterUrl(null);
+    setPartnerPosterUrl(null);
+    setUserAnnivPosterUrl(null);
+    setPartnerAnnivPosterUrl(null);
+  }
+}, [id]);
   useEffect(() => {
-    if (id) {
-      fetch(`/api/user?id=${id}`)
-        .then((res) => res.json())
-        .then(async (data) => {
-          setUser(data);
-          setFormData(JSON.parse(JSON.stringify(data)));
+    let cancelled = false;
 
-          setUserImageLoading(true);
-          setUserPosterLoading(true);
-          const userImg = await fetchImage(`${data.id}.jpg`);
-          const userPoster = await fetchImage(`${data.id}_poster.jpg`);
-          const annivPoster = await fetchImage(`${data.id}_anniv.jpg`);
-          setUserImageUrl(userImg);
-          setUserPosterUrl(userPoster);
-          setUserImageLoading(false);
-          setUserPosterLoading(false);
-          setUserAnnivPosterUrl(annivPoster);
-          setUserAnnivPosterLoading(false);
+    const fetchUserData = async () => {
+      try {
+        const res = await fetch(`/api/user?id=${id}`);
+        const data = await res.json();
 
-          if (data.partner?.id) {
-            setPartnerImageLoading(true);
-            setPartnerPosterLoading(true);
-            const partnerImg = await fetchImage(`${data.partner.id}.jpg`);
-            const partnerPoster = await fetchImage(`${data.partner.id}_poster.jpg`);
-            const partnerAnniv = await fetchImage(`${data.partner.id}_anniv.jpg`);
-            setPartnerImageUrl(partnerImg);
-            setPartnerPosterUrl(partnerPoster);
-            setPartnerImageLoading(false);
-            setPartnerPosterLoading(false);
-            setPartnerAnnivPosterUrl(partnerAnniv);
-            setPartnerAnnivPosterLoading(false);
-          }
-        })
-        .catch(console.error);
-    }
-  }, [id]);
+        if (cancelled) return;
+
+        setUser(data);
+        setFormData(JSON.parse(JSON.stringify(data)));
+
+        // Fetch user profile and posters
+        setUserImageLoading(true);
+        setUserPosterLoading(true);
+        setUserAnnivPosterLoading(true);
+
+        const [userImg, userPoster, userAnniv] = await Promise.all([
+          fetchImage(`${data.id}.jpg`),
+          fetchImage(`${data.id}_poster.jpg`),
+          fetchImage(`${data.id}_anniv.jpg`)
+        ]);
+
+        if (cancelled) return;
+
+        setUserImageUrl(userImg);
+        setUserPosterUrl(userPoster);
+        setUserAnnivPosterUrl(userAnniv);
+        setUserImageLoading(false);
+        setUserPosterLoading(false);
+        setUserAnnivPosterLoading(false);
+
+        // Fetch partner images only if not already set
+        if (data.partner?.id && !partnerImageUrl && !partnerPosterUrl) {
+          setPartnerImageLoading(true);
+          setPartnerPosterLoading(true);
+          setPartnerAnnivPosterLoading(true);
+
+          const [partnerImg, partnerPoster, partnerAnniv] = await Promise.all([
+            fetchImage(`${data.partner.id}.jpg`),
+            fetchImage(`${data.partner.id}_poster.jpg`),
+            fetchImage(`${data.partner.id}_anniv.jpg`)
+          ]);
+
+          if (cancelled) return;
+
+          setPartnerImageUrl(partnerImg);
+          setPartnerPosterUrl(partnerPoster);
+          setPartnerAnnivPosterUrl(partnerAnniv);
+          setPartnerImageLoading(false);
+          setPartnerPosterLoading(false);
+          setPartnerAnnivPosterLoading(false);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    if (id) fetchUserData();
+
+    return () => {
+      cancelled = true; // Cancel fetch on unmount or id change
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]); // depend only on id
+
 
   const fetchImage = async (filename) => {
     try {
@@ -313,32 +352,32 @@ export default function UserDetailModal({ id, onClose }) {
     );
   };
 
-const renderPoster = (url, alt, userId, isUser = true, loading = false, isAnniversary = false) => {
-  const isDownloading = isUser
-    ? (isAnniversary ? isDownloadingUserPoster : isDownloadingUserPoster)
-    : (isAnniversary ? isDownloadingPartnerPoster : isDownloadingPartnerPoster);
+  const renderPoster = (url, alt, userId, isUser = true, loading = false, isAnniversary = false) => {
+    const isDownloading = isUser
+      ? (isAnniversary ? isDownloadingUserPoster : isDownloadingUserPoster)
+      : (isAnniversary ? isDownloadingPartnerPoster : isDownloadingPartnerPoster);
 
-  return (
-    <div className="text-center w-32">
-      <label className="block cursor-pointer">
-        <input type="file" accept="image/*" hidden onChange={(e) => handlePosterSelect(e, isUser, isAnniversary)} />
-        <div className="w-32 h-48 border rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
-          {loading ? <span className="text-xs">Loading...</span> : url ? (
-            <Image src={url} alt={alt} width={128} height={192} className="object-cover" unoptimized />
-          ) : <span className="text-xs">No Poster</span>}
-        </div>
-      </label>
-      <button type="button" onClick={() => handlePosterDownload(userId, isUser, isAnniversary)} disabled={!url || isDownloading}
-        className="mt-2 text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60">
-        {isDownloading ? "Downloading..." : "Download"}
-      </button>
-      <button type="button" onClick={() => handlePosterDelete(userId, isUser, isAnniversary)} disabled={!url || isDownloading}
-        className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
-        Delete Poster
-      </button>
-    </div>
-  );
-};
+    return (
+      <div className="text-center w-32">
+        <label className="block cursor-pointer">
+          <input type="file" accept="image/*" hidden onChange={(e) => handlePosterSelect(e, isUser, isAnniversary)} />
+          <div className="w-32 h-48 border rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
+            {loading ? <span className="text-xs">Loading...</span> : url ? (
+              <Image src={url} alt={alt} width={128} height={192} className="object-cover" unoptimized />
+            ) : <span className="text-xs">No Poster</span>}
+          </div>
+        </label>
+        <button type="button" onClick={() => handlePosterDownload(userId, isUser, isAnniversary)} disabled={!url || isDownloading}
+          className="mt-2 text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60">
+          {isDownloading ? "Downloading..." : "Download"}
+        </button>
+        <button type="button" onClick={() => handlePosterDelete(userId, isUser, isAnniversary)} disabled={!url || isDownloading}
+          className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
+          Delete Poster
+        </button>
+      </div>
+    );
+  };
 
 
   const renderDateInputs = (path) => {
@@ -373,73 +412,73 @@ const renderPoster = (url, alt, userId, isUser = true, loading = false, isAnnive
           <h2 className="text-xl font-semibold">User Details</h2>
         </div>
         <form onSubmit={handleSubmit} className="space-y-8 text-sm">
-  {/* USER ROW */}
-  <div className="grid grid-cols-8 gap-4 items-start">
-    <div className="col-span-1">
-      {renderImage(userImageUrl, "User", user.id, true, userImageLoading)}
-    </div>
+          {/* USER ROW */}
+          <div className="grid grid-cols-8 gap-4 items-start">
+            <div className="col-span-1">
+              {renderImage(userImageUrl, "User", user.id, true, userImageLoading)}
+            </div>
 
-    <div className="col-span-4 grid grid-cols-3 gap-3">
-      <Input label="Name" path="name" value={formData.name} onChange={handleInputChange} />
-      <Select label="Role" path="role" value={formData.role} onChange={handleInputChange}
-        options={["District Team", "Influencer President", "Influencer Secretary"]} />
-      <Select label="Type" path="type" value={formData.type} onChange={handleInputChange}
-        options={["member", "spouse"]} />
-      <Input label="Club" path="club" value={formData.club} onChange={handleInputChange} />
-      <Input label="Email" path="email" value={formData.email} onChange={handleInputChange} />
-      <Input label="Phone" path="phone" value={formData.phone} onChange={handleInputChange} />
-      <div><Label text="DOB" />{renderDateInputs("dob")}</div>
-      <div><Label text="Anniversary" />{renderDateInputs("anniversary")}</div>
-    </div>
+            <div className="col-span-4 grid grid-cols-3 gap-3">
+              <Input label="Name" path="name" value={formData.name} onChange={handleInputChange} />
+              <Select label="Role" path="role" value={formData.role} onChange={handleInputChange}
+                options={["District Team", "Influencer President", "Influencer Secretary"]} />
+              <Select label="Type" path="type" value={formData.type} onChange={handleInputChange}
+                options={["member", "spouse"]} />
+              <Input label="Club" path="club" value={formData.club} onChange={handleInputChange} />
+              <Input label="Email" path="email" value={formData.email} onChange={handleInputChange} />
+              <Input label="Phone" path="phone" value={formData.phone} onChange={handleInputChange} />
+              <div><Label text="DOB" />{renderDateInputs("dob")}</div>
+              <div><Label text="Anniversary" />{renderDateInputs("anniversary")}</div>
+            </div>
 
-    <div className="col-span-1">
-      {renderPoster(userPosterUrl, "User Poster", user.id, true, userPosterLoading)}
-    </div>
+            <div className="col-span-1">
+              {renderPoster(userPosterUrl, "User Poster", user.id, true, userPosterLoading)}
+            </div>
 
-    {formData.type === "member" && (
-      <div className="col-span-1">
-        {renderPoster(userAnnivPosterUrl, "User Anniv Poster", user.id, true, userAnnivPosterLoading, true)}
-      </div>
-    )}
-  </div>
+            {formData.type === "member" && (
+              <div className="col-span-1">
+                {renderPoster(userAnnivPosterUrl, "User Anniv Poster", user.id, true, userAnnivPosterLoading, true)}
+              </div>
+            )}
+          </div>
 
-  {/* PARTNER ROW */}
-  <div className="grid grid-cols-8 gap-4 items-start">
-    <div className="col-span-1">
-      {renderImage(partnerImageUrl, "Partner", user.partner?.id, false, partnerImageLoading)}
-    </div>
+          {/* PARTNER ROW */}
+          <div className="grid grid-cols-8 gap-4 items-start">
+            <div className="col-span-1">
+              {renderImage(partnerImageUrl, "Partner", user.partner?.id, false, partnerImageLoading)}
+            </div>
 
-    <div className="col-span-4 grid grid-cols-3 gap-3">
-      <Input label="Name" path="partner.name" value={formData.partner.name} onChange={handleInputChange} />
-      <Select label="Role" path="partner.role" value={formData.partner.role} onChange={handleInputChange}
-        options={["District Team", "Influencer President", "Influencer Secretary"]} />
-      <Select label="Type" path="partner.type" value={formData.partner.type} onChange={handleInputChange}
-        options={["member", "spouse"]} />
-      <Input label="Club" path="partner.club" value={formData.partner.club} onChange={handleInputChange} />
-      <Input label="Email" path="partner.email" value={formData.partner.email} onChange={handleInputChange} />
-      <Input label="Phone" path="partner.phone" value={formData.partner.phone} onChange={handleInputChange} />
-      <div><Label text="DOB" />{renderDateInputs("partner.dob")}</div>
-    </div>
+            <div className="col-span-4 grid grid-cols-3 gap-3">
+              <Input label="Name" path="partner.name" value={formData.partner.name} onChange={handleInputChange} />
+              <Select label="Role" path="partner.role" value={formData.partner.role} onChange={handleInputChange}
+                options={["District Team", "Influencer President", "Influencer Secretary"]} />
+              <Select label="Type" path="partner.type" value={formData.partner.type} onChange={handleInputChange}
+                options={["member", "spouse"]} />
+              <Input label="Club" path="partner.club" value={formData.partner.club} onChange={handleInputChange} />
+              <Input label="Email" path="partner.email" value={formData.partner.email} onChange={handleInputChange} />
+              <Input label="Phone" path="partner.phone" value={formData.partner.phone} onChange={handleInputChange} />
+              <div><Label text="DOB" />{renderDateInputs("partner.dob")}</div>
+            </div>
 
-    <div className="col-span-1">
-      {renderPoster(partnerPosterUrl, "Partner Poster", user.partner?.id, false, partnerPosterLoading)}
-    </div>
+            <div className="col-span-1">
+              {renderPoster(partnerPosterUrl, "Partner Poster", user.partner?.id, false, partnerPosterLoading)}
+            </div>
 
-    {formData.partner?.type === "member" && (
-      <div className="col-span-1">
-        {renderPoster(partnerAnnivPosterUrl, "Partner Anniv Poster", user.partner?.id, false, partnerAnnivPosterLoading, true)}
-      </div>
-    )}
-  </div>
+            {formData.partner?.type === "member" && (
+              <div className="col-span-1">
+                {renderPoster(partnerAnnivPosterUrl, "Partner Anniv Poster", user.partner?.id, false, partnerAnnivPosterLoading, true)}
+              </div>
+            )}
+          </div>
 
-  {/* SUBMIT BUTTON */}
-  <div className="text-center pt-4">
-    <button type="submit" disabled={isSubmitting}
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
-      {isSubmitting ? "Updating..." : "Save"}
-    </button>
-  </div>
-</form>
+          {/* SUBMIT BUTTON */}
+          <div className="text-center pt-4">
+            <button type="submit" disabled={isSubmitting}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+              {isSubmitting ? "Updating..." : "Save"}
+            </button>
+          </div>
+        </form>
 
 
         {confirmState && (
