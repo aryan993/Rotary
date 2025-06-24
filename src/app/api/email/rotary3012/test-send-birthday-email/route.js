@@ -300,10 +300,9 @@ export async function POST(request) {
     </p>
 
     <div style="display: flex; justify-content: center; gap: 20px; margin: 10px 0;">
-    ${logo009Cid ? `<img src="cid:${logo009Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}  
-    ${logo006Cid ? `<img src="cid:${logo006Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
-    ${logo008Cid ? `<img src="cid:${logo008Cid}" style="max-height: 100px; margin: 0px 02px;" alt="Team Logo" />` : ''}
-      
+      ${logo009Cid ? `<img src="cid:${logo009Cid}" style="max-height: 60px; margin: 0px 02px;" alt="Team Logo" />` : ''}  
+      ${logo006Cid ? `<img src="cid:${logo006Cid}" style="max-height: 60px; margin: 0px 02px;" alt="Team Logo" />` : ''}
+      ${logo008Cid ? `<img src="cid:${logo008Cid}" style="max-height: 60px; margin: 0px 02px;" alt="Team Logo" />` : ''}
     </div>
 
     <div style="margin-top: 20px;">
@@ -316,17 +315,20 @@ export async function POST(request) {
             <p style="margin: 0;">
               <em>Designed and Maintained by</em><br />
               <strong>Tirupati Balaji Advertising & Marketing</strong><br />
-              (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava)<br />
-              Founder and Charter President of RC Indirapuram Galore
+              (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava Ph:+919810522380)<br />
+              Founder and Charter President of RC Indirapuram Galore<br />
+              District Club Co-coordinator 2025-26
             </p>
           </td>
         </tr>
       </table>
     </div>
+<div style="text-align: center; margin: 40px 0; font-family: Arial, sans-serif; font-size: 14px; color: #777;">
+  If you would prefer not to receive these emails, please
+  <strong>click the unsubscribe link at the bottom of this email</strong>.
+</div>
   </div>
-`;
-
-    htmlTable += '</div></body></html>';
+</div></body></html>`;
 
     // ✅ Elastic Email SMTP configuration
     const transporter = nodemailer.createTransport({
@@ -344,14 +346,21 @@ export async function POST(request) {
     for (const recipient of email_list) {
       await transporter.sendMail({
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
-        to: recipient,  // send to one person at a time
+        to: recipient,
         replyTo: 'rtndramitaanilmohindru@gmail.com',
         subject: `Birthday and Anniversary Notification ${today}`,
         html: htmlTable,
         attachments,
+        headers: {
+          'X-ElasticEmail-Settings': JSON.stringify({
+            UnsubscribeLinkText: '',
+            UnsubscribeLinkType: 'None'
+          })
+        }
       });
-      console.log("email send to " + recipient)
+      console.log("email sent to " + recipient);
     }
+
 
     return Response.json({
       message: 'Email sent successfully',
@@ -389,7 +398,7 @@ async function fetchByType(date, type) {
         .eq('type', 'member')
         .eq('anniversary', date)
         .eq('active', 'True')
-        .eq('partner.active','True');
+        .eq('partner.active', 'True');
     } else {
       throw new Error("Invalid type provided");
     }
