@@ -23,6 +23,7 @@ export default function UserDetailModal({ id, onClose }) {
   const [isDownloadingPartner, setIsDownloadingPartner] = useState(false);
   const [isDownloadingUserPoster, setIsDownloadingUserPoster] = useState(false);
   const [isDownloadingPartnerPoster, setIsDownloadingPartnerPoster] = useState(false);
+  const [confirmState, setConfirmState] = useState(null); // { type: 'profile' | 'poster', isUser: true/false, id: string }
 
   useEffect(() => {
     if (id) {
@@ -148,6 +149,33 @@ export default function UserDetailModal({ id, onClose }) {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!confirmState) return;
+    const { type, isUser, id } = confirmState;
+    try {
+      const endpoint = type === "profile" ? "/api/profile/delete" : "/api/poster/delete";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error("Failed to delete");
+      onClose(); // Close modal on success
+    } catch (err) {
+      alert("Delete failed");
+    } finally {
+      setConfirmState(null);
+    }
+  };
+
+  const handleDelete = (id, isUser) => {
+    setConfirmState({ type: "profile", isUser, id });
+  };
+
+  const handlePosterDelete = (id, isUser) => {
+    setConfirmState({ type: "poster", isUser, id });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -232,6 +260,10 @@ export default function UserDetailModal({ id, onClose }) {
             className="mt-1 px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60">
             {isDownloading ? "Downloading..." : "Download"}
           </button>
+          <button type="button" onClick={() => handleDelete(userId, isUser)} disabled={!url || isDownloading}
+            className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
+            Delete Profile
+          </button>
         </div>
       </div>
     );
@@ -252,6 +284,10 @@ export default function UserDetailModal({ id, onClose }) {
         <button type="button" onClick={() => handlePosterDownload(userId, isUser)} disabled={!url || isDownloading}
           className="mt-2 text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60">
           {isDownloading ? "Downloading..." : "Download"}
+        </button>
+        <button type="button" onClick={() => handlePosterDelete(userId, isUser)} disabled={!url || isDownloading}
+          className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
+          Delete Poster
         </button>
       </div>
     );
@@ -329,33 +365,48 @@ export default function UserDetailModal({ id, onClose }) {
             </button>
           </div>
         </form>
+
+        {confirmState && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded shadow-xl text-center">
+              <p className="mb-4">Are you sure you want to delete this {confirmState.type} image?</p>
+              <div className="flex justify-center gap-4">
+                <button onClick={confirmDelete}
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                  Yes, Delete
+                </button>
+                <button onClick={() => setConfirmState(null)}
+                  className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function Input({ label, path, value, onChange }) {
-  return (
-    <div>
-      <Label text={label} />
-      <input type="text" value={value || ""} onChange={(e) => onChange(path, e.target.value)}
-        className="w-full border p-1 rounded text-sm" />
-    </div>
-  );
-}
+const Input = ({ label, path, value, onChange }) => (
+  <div>
+    <Label text={label} />
+    <input value={value || ""} onChange={(e) => onChange(path, e.target.value)}
+      className="border rounded p-1 w-full" />
+  </div>
+);
 
-function Select({ label, path, value, onChange, options }) {
-  return (
-    <div>
-      <Label text={label} />
-      <select value={value} onChange={(e) => onChange(path, e.target.value)}
-        className="w-full border border-black rounded-md p-1.5">
-        {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
-    </div>
-  );
-}
+const Select = ({ label, path, value, onChange, options = [] }) => (
+  <div>
+    <Label text={label} />
+    <select value={value || ""} onChange={(e) => onChange(path, e.target.value)}
+      className="border rounded p-1 w-full">
+      <option value="">--Select--</option>
+      {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+    </select>
+  </div>
+);
 
-function Label({ text }) {
-  return <label className="block font-medium mb-0.5">{text}</label>;
-}
+const Label = ({ text }) => (
+  <label className="block mb-1 font-medium text-gray-700">{text}</label>
+);
