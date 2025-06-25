@@ -6,41 +6,55 @@ import Image from "next/image";
 export default function UserDetailModal({ id, onClose }) {
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState(null);
-  const [userImageUrl, setUserImageUrl] = useState(null);
-  const [partnerImageUrl, setPartnerImageUrl] = useState(null);
-  const [userPosterUrl, setUserPosterUrl] = useState(null);
-  const [partnerPosterUrl, setPartnerPosterUrl] = useState(null);
-  const [userImageFile, setUserImageFile] = useState(null);
-  const [partnerImageFile, setPartnerImageFile] = useState(null);
-  const [userPosterFile, setUserPosterFile] = useState(null);
-  const [partnerPosterFile, setPartnerPosterFile] = useState(null);
-  const [userImageLoading, setUserImageLoading] = useState(true);
-  const [partnerImageLoading, setPartnerImageLoading] = useState(true);
-  const [userPosterLoading, setUserPosterLoading] = useState(true);
-  const [partnerPosterLoading, setPartnerPosterLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDownloadingUser, setIsDownloadingUser] = useState(false);
-  const [isDownloadingPartner, setIsDownloadingPartner] = useState(false);
-  const [isDownloadingUserPoster, setIsDownloadingUserPoster] = useState(false);
-  const [isDownloadingPartnerPoster, setIsDownloadingPartnerPoster] = useState(false);
   const [confirmState, setConfirmState] = useState(null); // { type: 'profile' | 'poster', isUser: true/false, id: string }
-  const [userAnnivPosterUrl, setUserAnnivPosterUrl] = useState(null);
-  const [partnerAnnivPosterUrl, setPartnerAnnivPosterUrl] = useState(null);
-  const [userAnnivPosterFile, setUserAnnivPosterFile] = useState(null);
-  const [partnerAnnivPosterFile, setPartnerAnnivPosterFile] = useState(null);
-  const [userAnnivPosterLoading, setUserAnnivPosterLoading] = useState(true);
-  const [partnerAnnivPosterLoading, setPartnerAnnivPosterLoading] = useState(true);
+  
+  // Combined image states
+  const [images, setImages] = useState({
+    user: {
+      profile: { url: null, file: null, loading: true },
+      poster: { url: null, file: null, loading: true },
+      anniversary: { url: null, file: null, loading: true }
+    },
+    partner: {
+      profile: { url: null, file: null, loading: true },
+      poster: { url: null, file: null, loading: true },
+      anniversary: { url: null, file: null, loading: true }
+    }
+  });
 
-useEffect(() => {
-  if (id) {
-    setUserImageUrl(null);
-    setPartnerImageUrl(null);
-    setUserPosterUrl(null);
-    setPartnerPosterUrl(null);
-    setUserAnnivPosterUrl(null);
-    setPartnerAnnivPosterUrl(null);
-  }
-}, [id]);
+  // Combined loading states for downloads
+  const [downloadStates, setDownloadStates] = useState({
+    user: {
+      profile: false,
+      poster: false,
+      anniversary: false
+    },
+    partner: {
+      profile: false,
+      poster: false,
+      anniversary: false
+    }
+  });
+
+  useEffect(() => {
+    if (id) {
+      // Reset all image URLs when id changes
+      setImages(prev => ({
+        user: {
+          profile: { ...prev.user.profile, url: null },
+          poster: { ...prev.user.poster, url: null },
+          anniversary: { ...prev.user.anniversary, url: null }
+        },
+        partner: {
+          profile: { ...prev.partner.profile, url: null },
+          poster: { ...prev.partner.poster, url: null },
+          anniversary: { ...prev.partner.anniversary, url: null }
+        }
+      }));
+    }
+  }, [id]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -54,10 +68,15 @@ useEffect(() => {
         setUser(data);
         setFormData(JSON.parse(JSON.stringify(data)));
 
-        // Fetch user profile and posters
-        setUserImageLoading(true);
-        setUserPosterLoading(true);
-        setUserAnnivPosterLoading(true);
+        // Set loading states
+        setImages(prev => ({
+          ...prev,
+          user: {
+            profile: { ...prev.user.profile, loading: true },
+            poster: { ...prev.user.poster, loading: true },
+            anniversary: { ...prev.user.anniversary, loading: true }
+          }
+        }));
 
         const [userImg, userPoster, userAnniv] = await Promise.all([
           fetchImage(`${data.id}.jpg`),
@@ -67,18 +86,25 @@ useEffect(() => {
 
         if (cancelled) return;
 
-        setUserImageUrl(userImg);
-        setUserPosterUrl(userPoster);
-        setUserAnnivPosterUrl(userAnniv);
-        setUserImageLoading(false);
-        setUserPosterLoading(false);
-        setUserAnnivPosterLoading(false);
+        setImages(prev => ({
+          ...prev,
+          user: {
+            profile: { ...prev.user.profile, url: userImg, loading: false },
+            poster: { ...prev.user.poster, url: userPoster, loading: false },
+            anniversary: { ...prev.user.anniversary, url: userAnniv, loading: false }
+          }
+        }));
 
-        // Fetch partner images only if not already set
-        if (data.partner?.id && !partnerImageUrl && !partnerPosterUrl) {
-          setPartnerImageLoading(true);
-          setPartnerPosterLoading(true);
-          setPartnerAnnivPosterLoading(true);
+        // Fetch partner images only if partner exists
+        if (data.partner?.id) {
+          setImages(prev => ({
+            ...prev,
+            partner: {
+              profile: { ...prev.partner.profile, loading: true },
+              poster: { ...prev.partner.poster, loading: true },
+              anniversary: { ...prev.partner.anniversary, loading: true }
+            }
+          }));
 
           const [partnerImg, partnerPoster, partnerAnniv] = await Promise.all([
             fetchImage(`${data.partner.id}.jpg`),
@@ -88,12 +114,14 @@ useEffect(() => {
 
           if (cancelled) return;
 
-          setPartnerImageUrl(partnerImg);
-          setPartnerPosterUrl(partnerPoster);
-          setPartnerAnnivPosterUrl(partnerAnniv);
-          setPartnerImageLoading(false);
-          setPartnerPosterLoading(false);
-          setPartnerAnnivPosterLoading(false);
+          setImages(prev => ({
+            ...prev,
+            partner: {
+              profile: { ...prev.partner.profile, url: partnerImg, loading: false },
+              poster: { ...prev.partner.poster, url: partnerPoster, loading: false },
+              anniversary: { ...prev.partner.anniversary, url: partnerAnniv, loading: false }
+            }
+          }));
         }
       } catch (err) {
         console.error(err);
@@ -103,11 +131,9 @@ useEffect(() => {
     if (id) fetchUserData();
 
     return () => {
-      cancelled = true; // Cancel fetch on unmount or id change
+      cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]); // depend only on id
-
+  }, [id]);
 
   const fetchImage = async (filename) => {
     try {
@@ -128,13 +154,13 @@ useEffect(() => {
       return;
     }
     const url = URL.createObjectURL(file);
-    if (isUser) {
-      setUserImageUrl(url);
-      setUserImageFile(file);
-    } else {
-      setPartnerImageUrl(url);
-      setPartnerImageFile(file);
-    }
+    setImages(prev => ({
+      ...prev,
+      [isUser ? 'user' : 'partner']: {
+        ...prev[isUser ? 'user' : 'partner'],
+        profile: { url, file }
+      }
+    }));
   };
 
   const handlePosterSelect = (e, isUser, isAnniversary = false) => {
@@ -144,73 +170,56 @@ useEffect(() => {
       return;
     }
     const url = URL.createObjectURL(file);
-    if (isUser) {
-      if (isAnniversary) {
-        setUserAnnivPosterUrl(url);
-        setUserAnnivPosterFile(file);
-      } else {
-        setUserPosterUrl(url);
-        setUserPosterFile(file);
+    const type = isAnniversary ? 'anniversary' : 'poster';
+    
+    setImages(prev => ({
+      ...prev,
+      [isUser ? 'user' : 'partner']: {
+        ...prev[isUser ? 'user' : 'partner'],
+        [type]: { url, file }
       }
-    } else {
-      if (isAnniversary) {
-        setPartnerAnnivPosterUrl(url);
-        setPartnerAnnivPosterFile(file);
-      } else {
-        setPartnerPosterUrl(url);
-        setPartnerPosterFile(file);
-      }
-    }
+    }));
   };
 
-
-  const handleDownload = async (userId, isUser = true) => {
-    const setLoading = isUser ? setIsDownloadingUser : setIsDownloadingPartner;
+  const handleDownload = async (userId, isUser = true, type = 'profile') => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/profile/download", {
+      setDownloadStates(prev => ({
+        ...prev,
+        [isUser ? 'user' : 'partner']: {
+          ...prev[isUser ? 'user' : 'partner'],
+          [type]: true
+        }
+      }));
+
+      const endpoint = type === 'profile' ? "/api/profile/download" : "/api/poster/download";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: `${userId}.jpg` }),
+        body: JSON.stringify({ 
+          fileName: `${userId}${type === 'poster' ? '_poster.jpg' : type === 'anniversary' ? '_anniv.jpg' : '.jpg'}`,
+          ...(type !== 'profile' && { category: type === 'anniversary' ? 'anniversary' : undefined })
+        }),
       });
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed");
+      
       const link = document.createElement("a");
       link.href = data.downloadUrl;
-      link.download = data.fileName || `${userId}.jpg`;
+      link.download = data.fileName || `${userId}${type === 'poster' ? '_poster.jpg' : type === 'anniversary' ? '_anniv.jpg' : '.jpg'}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      alert("Download failed");
+      alert(`${type === 'profile' ? 'Profile' : 'Poster'} download failed`);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePosterDownload = async (userId, isUser = true, isAnniversary = false) => {
-    const setLoading = isUser
-      ? (isAnniversary ? setUserAnnivPosterLoading : setIsDownloadingUserPoster)
-      : (isAnniversary ? setPartnerAnnivPosterLoading : setIsDownloadingPartnerPoster);
-    try {
-      setLoading(true);
-      const res = await fetch("/api/poster/download", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: userId, category: isAnniversary ? "anniversary" : undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed");
-      const link = document.createElement("a");
-      link.href = data.downloadUrl;
-      link.download = data.fileName || `${userId}${isAnniversary ? "_anniv.jpg" : "_poster.jpg"}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      alert("Poster download failed");
-    } finally {
-      setLoading(false);
+      setDownloadStates(prev => ({
+        ...prev,
+        [isUser ? 'user' : 'partner']: {
+          ...prev[isUser ? 'user' : 'partner'],
+          [type]: false
+        }
+      }));
     }
   };
 
@@ -221,13 +230,15 @@ useEffect(() => {
       const endpoint = type === "profile" ? "/api/profile/delete" : "/api/poster/delete";
       const body = { id };
       if (type === "anniversary") body.category = "anniversary";
+      
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify(body),
       });
+      
       if (!res.ok) throw new Error("Failed to delete");
-      onClose(); // Close modal on success
+      onClose();
     } catch (err) {
       alert("Delete failed");
     } finally {
@@ -235,18 +246,15 @@ useEffect(() => {
     }
   };
 
-  const handleDelete = (id, isUser) => {
-    setConfirmState({ type: "profile", isUser, id });
-  };
-
-  const handlePosterDelete = (id, isUser, isAnniversary = false) => {
-    setConfirmState({ type: isAnniversary ? "anniversary" : "poster", isUser, id });
+  const handleDelete = (id, isUser, type = 'profile') => {
+    setConfirmState({ type, isUser, id });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // Save user data
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -254,51 +262,56 @@ useEffect(() => {
       });
       if (!res.ok) throw new Error("Failed to save");
 
+      // Prepare all uploads
       const uploads = [];
-
-      if (userImageFile) {
+      
+      // User uploads
+      if (images.user.profile.file) {
         const f = new FormData();
-        f.append("file", userImageFile);
+        f.append("file", images.user.profile.file);
         f.append("id", user.id);
         uploads.push(fetch("/api/profile/upload", { method: "POST", body: f }));
       }
 
-      if (partnerImageFile && user.partner?.id) {
+      if (images.user.poster.file) {
         const f = new FormData();
-        f.append("file", partnerImageFile);
-        f.append("id", user.partner.id);
-        uploads.push(fetch("/api/profile/upload", { method: "POST", body: f }));
-      }
-
-      if (userPosterFile) {
-        const f = new FormData();
-        f.append("file", userPosterFile);
+        f.append("file", images.user.poster.file);
         f.append("id", user.id);
         uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
       }
 
-      if (partnerPosterFile && user.partner?.id) {
+      if (images.user.anniversary.file) {
         const f = new FormData();
-        f.append("file", partnerPosterFile);
-        f.append("id", user.partner.id);
-        uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
-      }
-
-      if (userAnnivPosterFile) {
-        const f = new FormData();
-        f.append("file", userAnnivPosterFile);
+        f.append("file", images.user.anniversary.file);
         f.append("id", user.id);
         f.append("category", "anniversary");
         uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
       }
-      if (partnerAnnivPosterFile && user.partner?.id) {
-        const f = new FormData();
-        f.append("file", partnerAnnivPosterFile);
-        f.append("id", user.partner.id);
-        f.append("category", "anniversary");
-        uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
-      }
 
+      // Partner uploads
+      if (user.partner?.id) {
+        if (images.partner.profile.file) {
+          const f = new FormData();
+          f.append("file", images.partner.profile.file);
+          f.append("id", user.partner.id);
+          uploads.push(fetch("/api/profile/upload", { method: "POST", body: f }));
+        }
+
+        if (images.partner.poster.file) {
+          const f = new FormData();
+          f.append("file", images.partner.poster.file);
+          f.append("id", user.partner.id);
+          uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
+        }
+
+        if (images.partner.anniversary.file) {
+          const f = new FormData();
+          f.append("file", images.partner.anniversary.file);
+          f.append("id", user.partner.id);
+          f.append("category", "anniversary");
+          uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
+        }
+      }
 
       await Promise.all(uploads);
       onClose();
@@ -320,15 +333,14 @@ useEffect(() => {
     });
   };
 
-  const renderImage = (url, alt, userId, isUser = true, isLoading = false) => {
-    const isDownloading = isUser ? isDownloadingUser : isDownloadingPartner;
+  const renderImage = (imageData, alt, userId, isUser = true) => {
     return (
       <div className="text-center w-24">
         <label className="block cursor-pointer">
           <input type="file" accept="image/*" hidden onChange={(e) => handleImageSelect(e, isUser)} />
           <div className="w-24 h-24 border rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-            {isLoading ? <span className="text-xs">Loading...</span> : url ? (
-              <Image src={url} alt={alt} width={96} height={96} className="object-cover" unoptimized />
+            {imageData.loading ? <span className="text-xs">Loading...</span> : imageData.url ? (
+              <Image src={imageData.url} alt={alt} width={96} height={96} className="object-cover" unoptimized />
             ) : <span className="text-xs">No Image</span>}
           </div>
         </label>
@@ -339,11 +351,13 @@ useEffect(() => {
               onChange={(e) => handleInputChange(isUser ? "active" : "partner.active", e.target.checked)} />
             Active
           </label>
-          <button type="button" onClick={() => handleDownload(userId, isUser)} disabled={!url || isDownloading}
+          <button type="button" onClick={() => handleDownload(userId, isUser, 'profile')} 
+            disabled={!imageData.url || downloadStates[isUser ? 'user' : 'partner'].profile}
             className="mt-1 px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60">
-            {isDownloading ? "Downloading..." : "Download"}
+            {downloadStates[isUser ? 'user' : 'partner'].profile ? "Downloading..." : "Download"}
           </button>
-          <button type="button" onClick={() => handleDelete(userId, isUser)} disabled={!url || isDownloading}
+          <button type="button" onClick={() => handleDelete(userId, isUser, 'profile')} 
+            disabled={!imageData.url || downloadStates[isUser ? 'user' : 'partner'].profile}
             className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
             Delete Profile
           </button>
@@ -352,33 +366,31 @@ useEffect(() => {
     );
   };
 
-  const renderPoster = (url, alt, userId, isUser = true, loading = false, isAnniversary = false) => {
-    const isDownloading = isUser
-      ? (isAnniversary ? isDownloadingUserPoster : isDownloadingUserPoster)
-      : (isAnniversary ? isDownloadingPartnerPoster : isDownloadingPartnerPoster);
-
+  const renderPoster = (posterData, alt, userId, isUser = true, isAnniversary = false) => {
+    const type = isAnniversary ? 'anniversary' : 'poster';
     return (
       <div className="text-center w-32">
         <label className="block cursor-pointer">
           <input type="file" accept="image/*" hidden onChange={(e) => handlePosterSelect(e, isUser, isAnniversary)} />
           <div className="w-32 h-48 border rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
-            {loading ? <span className="text-xs">Loading...</span> : url ? (
-              <Image src={url} alt={alt} width={128} height={192} className="object-cover" unoptimized />
+            {posterData.loading ? <span className="text-xs">Loading...</span> : posterData.url ? (
+              <Image src={posterData.url} alt={alt} width={128} height={192} className="object-cover" unoptimized />
             ) : <span className="text-xs">No Poster</span>}
           </div>
         </label>
-        <button type="button" onClick={() => handlePosterDownload(userId, isUser, isAnniversary)} disabled={!url || isDownloading}
+        <button type="button" onClick={() => handleDownload(userId, isUser, type)} 
+          disabled={!posterData.url || downloadStates[isUser ? 'user' : 'partner'][type]}
           className="mt-2 text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60">
-          {isDownloading ? "Downloading..." : "Download"}
+          {downloadStates[isUser ? 'user' : 'partner'][type] ? "Downloading..." : "Download"}
         </button>
-        <button type="button" onClick={() => handlePosterDelete(userId, isUser, isAnniversary)} disabled={!url || isDownloading}
+        <button type="button" onClick={() => handleDelete(userId, isUser, type)} 
+          disabled={!posterData.url || downloadStates[isUser ? 'user' : 'partner'][type]}
           className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
           Delete Poster
         </button>
       </div>
     );
   };
-
 
   const renderDateInputs = (path) => {
     const value = path.split(".").reduce((acc, key) => acc?.[key], formData) || "";
@@ -415,7 +427,7 @@ useEffect(() => {
           {/* USER ROW */}
           <div className="grid grid-cols-8 gap-4 items-start">
             <div className="col-span-1">
-              {renderImage(userImageUrl, "User", user.id, true, userImageLoading)}
+              {renderImage(images.user.profile, "User", user.id, true)}
             </div>
 
             <div className="col-span-4 grid grid-cols-3 gap-3">
@@ -432,44 +444,46 @@ useEffect(() => {
             </div>
 
             <div className="col-span-1">
-              {renderPoster(userPosterUrl, "User Poster", user.id, true, userPosterLoading)}
+              {renderPoster(images.user.poster, "User Poster", user.id, true)}
             </div>
 
             {formData.type === "member" && (
               <div className="col-span-1">
-                {renderPoster(userAnnivPosterUrl, "User Anniv Poster", user.id, true, userAnnivPosterLoading, true)}
+                {renderPoster(images.user.anniversary, "User Anniv Poster", user.id, true, true)}
               </div>
             )}
           </div>
 
           {/* PARTNER ROW */}
-          <div className="grid grid-cols-8 gap-4 items-start">
-            <div className="col-span-1">
-              {renderImage(partnerImageUrl, "Partner", user.partner?.id, false, partnerImageLoading)}
-            </div>
-
-            <div className="col-span-4 grid grid-cols-3 gap-3">
-              <Input label="Name" path="partner.name" value={formData.partner.name} onChange={handleInputChange} />
-              <Select label="Role" path="partner.role" value={formData.partner.role} onChange={handleInputChange}
-                options={["District Team", "Influencer President", "Influencer Secretary"]} />
-              <Select label="Type" path="partner.type" value={formData.partner.type} onChange={handleInputChange}
-                options={["member", "spouse"]} />
-              <Input label="Club" path="partner.club" value={formData.partner.club} onChange={handleInputChange} />
-              <Input label="Email" path="partner.email" value={formData.partner.email} onChange={handleInputChange} />
-              <Input label="Phone" path="partner.phone" value={formData.partner.phone} onChange={handleInputChange} />
-              <div><Label text="DOB" />{renderDateInputs("partner.dob")}</div>
-            </div>
-
-            <div className="col-span-1">
-              {renderPoster(partnerPosterUrl, "Partner Poster", user.partner?.id, false, partnerPosterLoading)}
-            </div>
-
-            {formData.partner?.type === "member" && (
+          {formData.partner && (
+            <div className="grid grid-cols-8 gap-4 items-start">
               <div className="col-span-1">
-                {renderPoster(partnerAnnivPosterUrl, "Partner Anniv Poster", user.partner?.id, false, partnerAnnivPosterLoading, true)}
+                {renderImage(images.partner.profile, "Partner", formData.partner.id, false)}
               </div>
-            )}
-          </div>
+
+              <div className="col-span-4 grid grid-cols-3 gap-3">
+                <Input label="Name" path="partner.name" value={formData.partner.name} onChange={handleInputChange} />
+                <Select label="Role" path="partner.role" value={formData.partner.role} onChange={handleInputChange}
+                  options={["District Team", "Influencer President", "Influencer Secretary"]} />
+                <Select label="Type" path="partner.type" value={formData.partner.type} onChange={handleInputChange}
+                  options={["member", "spouse"]} />
+                <Input label="Club" path="partner.club" value={formData.partner.club} onChange={handleInputChange} />
+                <Input label="Email" path="partner.email" value={formData.partner.email} onChange={handleInputChange} />
+                <Input label="Phone" path="partner.phone" value={formData.partner.phone} onChange={handleInputChange} />
+                <div><Label text="DOB" />{renderDateInputs("partner.dob")}</div>
+              </div>
+
+              <div className="col-span-1">
+                {renderPoster(images.partner.poster, "Partner Poster", formData.partner.id, false)}
+              </div>
+
+              {formData.partner.type === "member" && (
+                <div className="col-span-1">
+                  {renderPoster(images.partner.anniversary, "Partner Anniv Poster", formData.partner.id, false, true)}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* SUBMIT BUTTON */}
           <div className="text-center pt-4">
@@ -479,7 +493,6 @@ useEffect(() => {
             </button>
           </div>
         </form>
-
 
         {confirmState && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
