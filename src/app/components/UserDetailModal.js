@@ -7,7 +7,8 @@ export default function UserDetailModal({ id, onClose }) {
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [confirmState, setConfirmState] = useState(null); // { type: 'profile' | 'poster', isUser: true/false, id: string }
+  const [confirmState, setConfirmState] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // Global loading state
   
   // Combined image states
   const [images, setImages] = useState({
@@ -60,6 +61,7 @@ export default function UserDetailModal({ id, onClose }) {
 
     const fetchUserData = async () => {
       try {
+        setIsLoading(true);
         const res = await fetch(`/api/user?id=${id}`);
         const data = await res.json();
 
@@ -125,6 +127,8 @@ export default function UserDetailModal({ id, onClose }) {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -148,6 +152,8 @@ export default function UserDetailModal({ id, onClose }) {
   };
 
   const handleImageSelect = (e, isUser) => {
+    if (isLoading) return;
+    
     const file = e.target.files[0];
     if (!file || file.size > 5 * 1024 * 1024) {
       alert("Image must be under 5MB.");
@@ -164,6 +170,8 @@ export default function UserDetailModal({ id, onClose }) {
   };
 
   const handlePosterSelect = (e, isUser, isAnniversary = false) => {
+    if (isLoading) return;
+    
     const file = e.target.files[0];
     if (!file || file.size > 5 * 1024 * 1024) {
       alert("Poster must be under 5MB.");
@@ -183,6 +191,7 @@ export default function UserDetailModal({ id, onClose }) {
 
   const handleDownload = async (userId, isUser = true, type = 'profile') => {
     try {
+      setIsLoading(true);
       setDownloadStates(prev => ({
         ...prev,
         [isUser ? 'user' : 'partner']: {
@@ -220,13 +229,15 @@ export default function UserDetailModal({ id, onClose }) {
           [type]: false
         }
       }));
+      setIsLoading(false);
     }
   };
 
   const confirmDelete = async () => {
     if (!confirmState) return;
-    const { type, isUser, id } = confirmState;
     try {
+      setIsLoading(true);
+      const { type, isUser, id } = confirmState;
       const endpoint = type === "profile" ? "/api/profile/delete" : "/api/poster/delete";
       const body = { id };
       if (type === "anniversary") body.category = "anniversary";
@@ -243,16 +254,19 @@ export default function UserDetailModal({ id, onClose }) {
       alert("Delete failed");
     } finally {
       setConfirmState(null);
+      setIsLoading(false);
     }
   };
 
   const handleDelete = (id, isUser, type = 'profile') => {
+    if (isLoading) return;
     setConfirmState({ type, isUser, id });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setIsLoading(true);
     try {
       // Save user data
       const res = await fetch("/api/users", {
@@ -319,10 +333,12 @@ export default function UserDetailModal({ id, onClose }) {
       alert("Submit failed");
     } finally {
       setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   const handleInputChange = (path, value) => {
+    if (isLoading) return;
     setFormData((prev) => {
       const newData = { ...prev };
       const keys = path.split(".");
@@ -337,7 +353,13 @@ export default function UserDetailModal({ id, onClose }) {
     return (
       <div className="text-center w-24">
         <label className="block cursor-pointer">
-          <input type="file" accept="image/*" hidden onChange={(e) => handleImageSelect(e, isUser)} />
+          <input 
+            type="file" 
+            accept="image/*" 
+            hidden 
+            onChange={(e) => handleImageSelect(e, isUser)} 
+            disabled={isLoading}
+          />
           <div className="w-24 h-24 border rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
             {imageData.loading ? <span className="text-xs">Loading...</span> : imageData.url ? (
               <Image src={imageData.url} alt={alt} width={96} height={96} className="object-cover" unoptimized />
@@ -347,18 +369,28 @@ export default function UserDetailModal({ id, onClose }) {
         <div className="mt-2 text-xs">
           <div><strong>ID:</strong> {userId}</div>
           <label className="flex justify-center items-center gap-1 mt-1">
-            <input type="checkbox" checked={isUser ? formData.active : formData.partner?.active}
-              onChange={(e) => handleInputChange(isUser ? "active" : "partner.active", e.target.checked)} />
+            <input 
+              type="checkbox" 
+              checked={isUser ? formData.active : formData.partner?.active}
+              onChange={(e) => handleInputChange(isUser ? "active" : "partner.active", e.target.checked)} 
+              disabled={isLoading}
+            />
             Active
           </label>
-          <button type="button" onClick={() => handleDownload(userId, isUser, 'profile')} 
-            disabled={!imageData.url || downloadStates[isUser ? 'user' : 'partner'].profile}
-            className="mt-1 px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60">
+          <button 
+            type="button" 
+            onClick={() => handleDownload(userId, isUser, 'profile')} 
+            disabled={!imageData.url || isLoading || downloadStates[isUser ? 'user' : 'partner'].profile}
+            className="mt-1 px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
+          >
             {downloadStates[isUser ? 'user' : 'partner'].profile ? "Downloading..." : "Download"}
           </button>
-          <button type="button" onClick={() => handleDelete(userId, isUser, 'profile')} 
-            disabled={!imageData.url || downloadStates[isUser ? 'user' : 'partner'].profile}
-            className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
+          <button 
+            type="button" 
+            onClick={() => handleDelete(userId, isUser, 'profile')} 
+            disabled={!imageData.url || isLoading || downloadStates[isUser ? 'user' : 'partner'].profile}
+            className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+          >
             Delete Profile
           </button>
         </div>
@@ -371,21 +403,33 @@ export default function UserDetailModal({ id, onClose }) {
     return (
       <div className="text-center w-32">
         <label className="block cursor-pointer">
-          <input type="file" accept="image/*" hidden onChange={(e) => handlePosterSelect(e, isUser, isAnniversary)} />
+          <input 
+            type="file" 
+            accept="image/*" 
+            hidden 
+            onChange={(e) => handlePosterSelect(e, isUser, isAnniversary)} 
+            disabled={isLoading}
+          />
           <div className="w-32 h-48 border rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
             {posterData.loading ? <span className="text-xs">Loading...</span> : posterData.url ? (
               <Image src={posterData.url} alt={alt} width={128} height={192} className="object-cover" unoptimized />
             ) : <span className="text-xs">No Poster</span>}
           </div>
         </label>
-        <button type="button" onClick={() => handleDownload(userId, isUser, type)} 
-          disabled={!posterData.url || downloadStates[isUser ? 'user' : 'partner'][type]}
-          className="mt-2 text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60">
+        <button 
+          type="button" 
+          onClick={() => handleDownload(userId, isUser, type)} 
+          disabled={!posterData.url || isLoading || downloadStates[isUser ? 'user' : 'partner'][type]}
+          className="mt-2 text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60"
+        >
           {downloadStates[isUser ? 'user' : 'partner'][type] ? "Downloading..." : "Download"}
         </button>
-        <button type="button" onClick={() => handleDelete(userId, isUser, type)} 
-          disabled={!posterData.url || downloadStates[isUser ? 'user' : 'partner'][type]}
-          className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
+        <button 
+          type="button" 
+          onClick={() => handleDelete(userId, isUser, type)} 
+          disabled={!posterData.url || isLoading || downloadStates[isUser ? 'user' : 'partner'][type]}
+          className="mt-1 px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+        >
           Delete Poster
         </button>
       </div>
@@ -399,10 +443,20 @@ export default function UserDetailModal({ id, onClose }) {
     const days = [...Array(31)].map((_, i) => i + 1);
     return (
       <div className="flex gap-2">
-        <select value={+day || ""} onChange={(e) => updateDate("day", e.target.value)} className="w-1/2 border p-1 rounded text-sm">
+        <select 
+          value={+day || ""} 
+          onChange={(e) => updateDate("day", e.target.value)} 
+          className="w-1/2 border p-1 rounded text-sm"
+          disabled={isLoading}
+        >
           <option value="">Day</option>{days.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
-        <select value={+month || ""} onChange={(e) => updateDate("month", e.target.value)} className="w-1/2 border p-1 rounded text-sm">
+        <select 
+          value={+month || ""} 
+          onChange={(e) => updateDate("month", e.target.value)} 
+          className="w-1/2 border p-1 rounded text-sm"
+          disabled={isLoading}
+        >
           <option value="">Month</option>{months.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
       </div>
@@ -419,9 +473,18 @@ export default function UserDetailModal({ id, onClose }) {
   return (
     <div className="fixed inset-0 bg-white bg-opacity-90 z-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded-lg w-full h-full relative shadow-lg overflow-y-auto pb-6">
-        <button onClick={onClose} className="absolute top-2 right-2 text-xl">✕</button>
+        <button 
+          onClick={onClose} 
+          className="absolute top-2 right-2 text-xl"
+          disabled={isLoading}
+        >
+          ✕
+        </button>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">User Details</h2>
+          {isLoading && (
+            <div className="text-sm text-blue-600">Processing...</div>
+          )}
         </div>
         <form onSubmit={handleSubmit} className="space-y-8 text-sm">
           {/* USER ROW */}
@@ -431,14 +494,14 @@ export default function UserDetailModal({ id, onClose }) {
             </div>
 
             <div className="col-span-4 grid grid-cols-3 gap-3">
-              <Input label="Name" path="name" value={formData.name} onChange={handleInputChange} />
+              <Input label="Name" path="name" value={formData.name} onChange={handleInputChange} disabled={isLoading} />
               <Select label="Role" path="role" value={formData.role} onChange={handleInputChange}
-                options={["District Team", "Influencer President", "Influencer Secretary"]} />
+                options={["District Team", "Influencer President", "Influencer Secretary"]} disabled={isLoading} />
               <Select label="Type" path="type" value={formData.type} onChange={handleInputChange}
-                options={["member", "spouse"]} />
-              <Input label="Club" path="club" value={formData.club} onChange={handleInputChange} />
-              <Input label="Email" path="email" value={formData.email} onChange={handleInputChange} />
-              <Input label="Phone" path="phone" value={formData.phone} onChange={handleInputChange} />
+                options={["member", "spouse"]} disabled={isLoading} />
+              <Input label="Club" path="club" value={formData.club} onChange={handleInputChange} disabled={isLoading} />
+              <Input label="Email" path="email" value={formData.email} onChange={handleInputChange} disabled={isLoading} />
+              <Input label="Phone" path="phone" value={formData.phone} onChange={handleInputChange} disabled={isLoading} />
               <div><Label text="DOB" />{renderDateInputs("dob")}</div>
               <div><Label text="Anniversary" />{renderDateInputs("anniversary")}</div>
             </div>
@@ -462,14 +525,14 @@ export default function UserDetailModal({ id, onClose }) {
               </div>
 
               <div className="col-span-4 grid grid-cols-3 gap-3">
-                <Input label="Name" path="partner.name" value={formData.partner.name} onChange={handleInputChange} />
+                <Input label="Name" path="partner.name" value={formData.partner.name} onChange={handleInputChange} disabled={isLoading} />
                 <Select label="Role" path="partner.role" value={formData.partner.role} onChange={handleInputChange}
-                  options={["District Team", "Influencer President", "Influencer Secretary"]} />
+                  options={["District Team", "Influencer President", "Influencer Secretary"]} disabled={isLoading} />
                 <Select label="Type" path="partner.type" value={formData.partner.type} onChange={handleInputChange}
-                  options={["member", "spouse"]} />
-                <Input label="Club" path="partner.club" value={formData.partner.club} onChange={handleInputChange} />
-                <Input label="Email" path="partner.email" value={formData.partner.email} onChange={handleInputChange} />
-                <Input label="Phone" path="partner.phone" value={formData.partner.phone} onChange={handleInputChange} />
+                  options={["member", "spouse"]} disabled={isLoading} />
+                <Input label="Club" path="partner.club" value={formData.partner.club} onChange={handleInputChange} disabled={isLoading} />
+                <Input label="Email" path="partner.email" value={formData.partner.email} onChange={handleInputChange} disabled={isLoading} />
+                <Input label="Phone" path="partner.phone" value={formData.partner.phone} onChange={handleInputChange} disabled={isLoading} />
                 <div><Label text="DOB" />{renderDateInputs("partner.dob")}</div>
               </div>
 
@@ -487,8 +550,11 @@ export default function UserDetailModal({ id, onClose }) {
 
           {/* SUBMIT BUTTON */}
           <div className="text-center pt-4">
-            <button type="submit" disabled={isSubmitting}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+            <button 
+              type="submit" 
+              disabled={isSubmitting || isLoading}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
               {isSubmitting ? "Updating..." : "Save"}
             </button>
           </div>
@@ -499,12 +565,18 @@ export default function UserDetailModal({ id, onClose }) {
             <div className="bg-white p-6 rounded shadow-xl text-center">
               <p className="mb-4">Are you sure you want to delete this {confirmState.type} image?</p>
               <div className="flex justify-center gap-4">
-                <button onClick={confirmDelete}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                  Yes, Delete
+                <button 
+                  onClick={confirmDelete} 
+                  disabled={isLoading}
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-60"
+                >
+                  {isLoading ? "Deleting..." : "Yes, Delete"}
                 </button>
-                <button onClick={() => setConfirmState(null)}
-                  className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">
+                <button 
+                  onClick={() => setConfirmState(null)} 
+                  disabled={isLoading}
+                  className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400 disabled:opacity-60"
+                >
                   Cancel
                 </button>
               </div>
@@ -516,19 +588,27 @@ export default function UserDetailModal({ id, onClose }) {
   );
 }
 
-const Input = ({ label, path, value, onChange }) => (
+const Input = ({ label, path, value, onChange, disabled }) => (
   <div>
     <Label text={label} />
-    <input value={value || ""} onChange={(e) => onChange(path, e.target.value)}
-      className="border rounded p-1 w-full" />
+    <input 
+      value={value || ""} 
+      onChange={(e) => onChange(path, e.target.value)}
+      className="border rounded p-1 w-full disabled:opacity-60" 
+      disabled={disabled}
+    />
   </div>
 );
 
-const Select = ({ label, path, value, onChange, options = [] }) => (
+const Select = ({ label, path, value, onChange, options = [], disabled }) => (
   <div>
     <Label text={label} />
-    <select value={value || ""} onChange={(e) => onChange(path, e.target.value)}
-      className="border rounded p-1 w-full">
+    <select 
+      value={value || ""} 
+      onChange={(e) => onChange(path, e.target.value)}
+      className="border rounded p-1 w-full disabled:opacity-60"
+      disabled={disabled}
+    >
       <option value="">--Select--</option>
       {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
     </select>
