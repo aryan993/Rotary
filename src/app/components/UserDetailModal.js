@@ -8,19 +8,19 @@ export default function UserDetailModal({ id, onClose }) {
   const [formData, setFormData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmState, setConfirmState] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Global loading state
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Combined image states
+  // Simplified image state
   const [images, setImages] = useState({
     user: {
-      profile: { url: null, file: null, loading: true },
-      poster: { url: null, file: null, loading: true },
-      anniversary: { url: null, file: null, loading: true }
+      profile: { url: null, file: null },
+      poster: { url: null, file: null },
+      anniversary: { url: null, file: null }
     },
     partner: {
-      profile: { url: null, file: null, loading: true },
-      poster: { url: null, file: null, loading: true },
-      anniversary: { url: null, file: null, loading: true }
+      profile: { url: null, file: null },
+      poster: { url: null, file: null },
+      anniversary: { url: null, file: null }
     }
   });
 
@@ -38,21 +38,31 @@ export default function UserDetailModal({ id, onClose }) {
     }
   });
 
+  // Helper function to construct image URLs
+  const getImageUrl = (userId, type = 'profile') => {
+    let filename = userId;
+    if (type === 'poster') filename += '_poster.jpg';
+    else if (type === 'anniversary') filename += '_anniv.jpg';
+    else filename += '.jpg';
+    
+    return `/api/profile/image?filename=${filename}&cacheBust=${Date.now()}`;
+  };
+
   useEffect(() => {
     if (id) {
       // Reset all image URLs when id changes
-      setImages(prev => ({
+      setImages({
         user: {
-          profile: { ...prev.user.profile, url: null },
-          poster: { ...prev.user.poster, url: null },
-          anniversary: { ...prev.user.anniversary, url: null }
+          profile: { url: null, file: null },
+          poster: { url: null, file: null },
+          anniversary: { url: null, file: null }
         },
         partner: {
-          profile: { ...prev.partner.profile, url: null },
-          poster: { ...prev.partner.poster, url: null },
-          anniversary: { ...prev.partner.anniversary, url: null }
+          profile: { url: null, file: null },
+          poster: { url: null, file: null },
+          anniversary: { url: null, file: null }
         }
-      }));
+      });
     }
   }, [id]);
 
@@ -70,61 +80,23 @@ export default function UserDetailModal({ id, onClose }) {
         setUser(data);
         setFormData(JSON.parse(JSON.stringify(data)));
 
-        // Set loading states
-        setImages(prev => ({
-          ...prev,
+        // Set image URLs directly
+        setImages({
           user: {
-            profile: { ...prev.user.profile, loading: true },
-            poster: { ...prev.user.poster, loading: true },
-            anniversary: { ...prev.user.anniversary, loading: true }
+            profile: { url: getImageUrl(data.id), file: null },
+            poster: { url: getImageUrl(data.id, 'poster'), file: null },
+            anniversary: { url: getImageUrl(data.id, 'anniversary'), file: null }
+          },
+          partner: data.partner?.id ? {
+            profile: { url: getImageUrl(data.partner.id), file: null },
+            poster: { url: getImageUrl(data.partner.id, 'poster'), file: null },
+            anniversary: { url: getImageUrl(data.partner.id, 'anniversary'), file: null }
+          } : {
+            profile: { url: null, file: null },
+            poster: { url: null, file: null },
+            anniversary: { url: null, file: null }
           }
-        }));
-
-        const [userImg, userPoster, userAnniv] = await Promise.all([
-          fetchImage(`${data.id}.jpg`),
-          fetchImage(`${data.id}_poster.jpg`),
-          fetchImage(`${data.id}_anniv.jpg`)
-        ]);
-
-        if (cancelled) return;
-
-        setImages(prev => ({
-          ...prev,
-          user: {
-            profile: { ...prev.user.profile, url: userImg, loading: false },
-            poster: { ...prev.user.poster, url: userPoster, loading: false },
-            anniversary: { ...prev.user.anniversary, url: userAnniv, loading: false }
-          }
-        }));
-
-        // Fetch partner images only if partner exists
-        if (data.partner?.id) {
-          setImages(prev => ({
-            ...prev,
-            partner: {
-              profile: { ...prev.partner.profile, loading: true },
-              poster: { ...prev.partner.poster, loading: true },
-              anniversary: { ...prev.partner.anniversary, loading: true }
-            }
-          }));
-
-          const [partnerImg, partnerPoster, partnerAnniv] = await Promise.all([
-            fetchImage(`${data.partner.id}.jpg`),
-            fetchImage(`${data.partner.id}_poster.jpg`),
-            fetchImage(`${data.partner.id}_anniv.jpg`)
-          ]);
-
-          if (cancelled) return;
-
-          setImages(prev => ({
-            ...prev,
-            partner: {
-              profile: { ...prev.partner.profile, url: partnerImg, loading: false },
-              poster: { ...prev.partner.poster, url: partnerPoster, loading: false },
-              anniversary: { ...prev.partner.anniversary, url: partnerAnniv, loading: false }
-            }
-          }));
-        }
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -138,18 +110,6 @@ export default function UserDetailModal({ id, onClose }) {
       cancelled = true;
     };
   }, [id]);
-
-  const fetchImage = async (filename) => {
-    try {
-      const res = await fetch(`/api/profile/image?filename=${filename}&cacheBust=${Date.now()}`);
-      if (!res.ok) return null;
-      const blob = await res.blob();
-      return URL.createObjectURL(blob);
-    } catch (err) {
-      console.error("Image fetch error:", err);
-      return null;
-    }
-  };
 
   const handleImageSelect = (e, isUser) => {
     if (isLoading) return;
@@ -205,8 +165,8 @@ export default function UserDetailModal({ id, onClose }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          fileName: `${userId}${type === 'poster' ? '_poster.jpg' : type === 'anniversary' ? '_anniv.jpg' : '.jpg'}`,
-          ...(type !== 'profile' && { category: type === 'anniversary' ? 'anniversary' : undefined })
+          fileName: userId,
+          category: type === 'anniversary' ? 'anniversary' : undefined
         }),
       });
       
@@ -239,16 +199,30 @@ export default function UserDetailModal({ id, onClose }) {
       setIsLoading(true);
       const { type, isUser, id } = confirmState;
       const endpoint = type === "profile" ? "/api/profile/delete" : "/api/poster/delete";
-      const body = { id };
-      if (type === "anniversary") body.category = "anniversary";
       
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          id,
+          category: type === "anniversary" ? "anniversary" : undefined
+        }),
       });
       
       if (!res.ok) throw new Error("Failed to delete");
+      
+      // Update local state to remove the deleted image
+      setImages(prev => ({
+        ...prev,
+        [isUser ? 'user' : 'partner']: {
+          ...prev[isUser ? 'user' : 'partner'],
+          [type === 'profile' ? 'profile' : type === 'anniversary' ? 'anniversary' : 'poster']: { 
+            url: null, 
+            file: null 
+          }
+        }
+      }));
+      
       onClose();
     } catch (err) {
       alert("Delete failed");
@@ -264,88 +238,88 @@ export default function UserDetailModal({ id, onClose }) {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setIsLoading(true);
-  try {
-    // Save user data
-    const res = await fetch("/api/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    if (!res.ok) throw new Error("Failed to save");
+    e.preventDefault();
+    setIsSubmitting(true);
+    setIsLoading(true);
+    try {
+      // Save user data
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error("Failed to save");
 
-    // Prepare all uploads
-    const uploads = [];
+      // Prepare all uploads
+      const uploads = [];
 
-    // User uploads
-    if (images.user.profile.file) {
-      const f = new FormData();
-      f.append("file", images.user.profile.file);
-      f.append("id", user.id);
-      uploads.push(() => fetch("/api/profile/upload", { method: "POST", body: f }));
-    }
-
-    if (images.user.poster.file) {
-      const f = new FormData();
-      f.append("file", images.user.poster.file);
-      f.append("id", user.id);
-      uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
-    }
-
-    if (images.user.anniversary.file) {
-      const f = new FormData();
-      f.append("file", images.user.anniversary.file);
-      f.append("id", user.id);
-      f.append("category", "anniversary");
-      uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
-    }
-
-    // Partner uploads
-    if (user.partner?.id) {
-      if (images.partner.profile.file) {
+      // User uploads
+      if (images.user.profile.file) {
         const f = new FormData();
-        f.append("file", images.partner.profile.file);
-        f.append("id", user.partner.id);
+        f.append("file", images.user.profile.file);
+        f.append("id", user.id);
         uploads.push(() => fetch("/api/profile/upload", { method: "POST", body: f }));
       }
 
-      if (images.partner.poster.file) {
+      if (images.user.poster.file) {
         const f = new FormData();
-        f.append("file", images.partner.poster.file);
-        f.append("id", user.partner.id);
+        f.append("file", images.user.poster.file);
+        f.append("id", user.id);
         uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
       }
 
-      if (images.partner.anniversary.file) {
+      if (images.user.anniversary.file) {
         const f = new FormData();
-        f.append("file", images.partner.anniversary.file);
-        f.append("id", user.partner.id);
+        f.append("file", images.user.anniversary.file);
+        f.append("id", user.id);
         f.append("category", "anniversary");
         uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
       }
-    }
 
-    // Execute uploads one-by-one (not in parallel)
-    for (const upload of uploads) {
-      try {
-        await upload();
-      } catch (err) {
-        console.error("One of the uploads failed:", err);
-        throw new Error("Upload failed");
+      // Partner uploads
+      if (user.partner?.id) {
+        if (images.partner.profile.file) {
+          const f = new FormData();
+          f.append("file", images.partner.profile.file);
+          f.append("id", user.partner.id);
+          uploads.push(() => fetch("/api/profile/upload", { method: "POST", body: f }));
+        }
+
+        if (images.partner.poster.file) {
+          const f = new FormData();
+          f.append("file", images.partner.poster.file);
+          f.append("id", user.partner.id);
+          uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
+        }
+
+        if (images.partner.anniversary.file) {
+          const f = new FormData();
+          f.append("file", images.partner.anniversary.file);
+          f.append("id", user.partner.id);
+          f.append("category", "anniversary");
+          uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
+        }
       }
-    }
 
-    onClose();
-  } catch (err) {
-    console.error(err);
-    alert("Submit failed");
-  } finally {
-    setIsSubmitting(false);
-    setIsLoading(false);
-  }
-};
+      // Execute uploads one-by-one
+      for (const upload of uploads) {
+        try {
+          await upload();
+        } catch (err) {
+          console.error("One of the uploads failed:", err);
+          throw new Error("Upload failed");
+        }
+      }
+
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Submit failed");
+    } finally {
+      setIsSubmitting(false);
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (path, value) => {
     if (isLoading) return;
@@ -371,8 +345,24 @@ export default function UserDetailModal({ id, onClose }) {
             disabled={isLoading}
           />
           <div className="w-24 h-24 border rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-            {imageData.loading ? <span className="text-xs">Loading...</span> : imageData.url ? (
-              <Image src={imageData.url} alt={alt} width={96} height={96} className="object-cover" unoptimized />
+            {imageData.url ? (
+              <Image 
+                src={imageData.url} 
+                alt={alt} 
+                width={96} 
+                height={96} 
+                className="object-cover"
+                unoptimized
+                onError={(e) => {
+                  setImages(prev => ({
+                    ...prev,
+                    [isUser ? 'user' : 'partner']: {
+                      ...prev[isUser ? 'user' : 'partner'],
+                      profile: { url: null, file: null }
+                    }
+                  }));
+                }}
+              />
             ) : <span className="text-xs">No Image</span>}
           </div>
         </label>
@@ -421,8 +411,24 @@ export default function UserDetailModal({ id, onClose }) {
             disabled={isLoading}
           />
           <div className="w-32 h-48 border rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
-            {posterData.loading ? <span className="text-xs">Loading...</span> : posterData.url ? (
-              <Image src={posterData.url} alt={alt} width={128} height={192} className="object-cover" unoptimized />
+            {posterData.url ? (
+              <Image 
+                src={posterData.url} 
+                alt={alt} 
+                width={128} 
+                height={192} 
+                className="object-cover"
+                unoptimized
+                onError={(e) => {
+                  setImages(prev => ({
+                    ...prev,
+                    [isUser ? 'user' : 'partner']: {
+                      ...prev[isUser ? 'user' : 'partner'],
+                      [type]: { url: null, file: null }
+                    }
+                  }));
+                }}
+              />
             ) : <span className="text-xs">No Poster</span>}
           </div>
         </label>
