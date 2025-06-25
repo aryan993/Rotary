@@ -19,14 +19,6 @@ export async function POST(request) {
             id = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
         }
 
-        //   if(category){
-        //       console.log("category recieved"+category)
-        //               return NextResponse.json(
-        //       { error: 'category recieved'},
-        //       { status: 500 }
-        //   );
-        //   }
-
         const fileBuffer = Buffer.from(await file.arrayBuffer());
 
         // Initialize MEGA storage

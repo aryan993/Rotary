@@ -1,10 +1,9 @@
-// src/app/api/download/route.js
+// src/app/api/poster/download/route.js
 import { Storage } from 'megajs'
 import { NextResponse } from 'next/server'
 
 export async function POST(req) {
   try {
-    
     const { MEGA_EMAIL, MEGA_PASSWORD } = process.env
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD) {
@@ -14,16 +13,18 @@ export async function POST(req) {
       )
     }
 
-    let { id } = await req.json()
-    let fileName=id;
-    console.log(fileName)
+    const { fileName } = await req.json()
+    
     if (!fileName) {
       return NextResponse.json(
         { message: 'File name is required' },
         { status: 400 }
       )
     }
-      fileName += '_poster.jpg'
+    console.log("poster to download is"+fileName)
+
+    let finalFileName = fileName
+
     // Authenticate with MEGA
     const storage = new Storage({
       email: MEGA_EMAIL,
@@ -36,7 +37,7 @@ export async function POST(req) {
     })
 
     const files = storage.root.children || []
-    const file = files.find(f => f.name === fileName)
+    const file = files.find(f => f.name === finalFileName)
 
     if (!file) {
       return NextResponse.json(

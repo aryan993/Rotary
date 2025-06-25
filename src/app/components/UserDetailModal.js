@@ -264,78 +264,88 @@ export default function UserDetailModal({ id, onClose }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setIsLoading(true);
-    try {
-      // Save user data
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) throw new Error("Failed to save");
+  e.preventDefault();
+  setIsSubmitting(true);
+  setIsLoading(true);
+  try {
+    // Save user data
+    const res = await fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+    if (!res.ok) throw new Error("Failed to save");
 
-      // Prepare all uploads
-      const uploads = [];
-      
-      // User uploads
-      if (images.user.profile.file) {
-        const f = new FormData();
-        f.append("file", images.user.profile.file);
-        f.append("id", user.id);
-        uploads.push(fetch("/api/profile/upload", { method: "POST", body: f }));
-      }
+    // Prepare all uploads
+    const uploads = [];
 
-      if (images.user.poster.file) {
-        const f = new FormData();
-        f.append("file", images.user.poster.file);
-        f.append("id", user.id);
-        uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
-      }
-
-      if (images.user.anniversary.file) {
-        const f = new FormData();
-        f.append("file", images.user.anniversary.file);
-        f.append("id", user.id);
-        f.append("category", "anniversary");
-        uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
-      }
-
-      // Partner uploads
-      if (user.partner?.id) {
-        if (images.partner.profile.file) {
-          const f = new FormData();
-          f.append("file", images.partner.profile.file);
-          f.append("id", user.partner.id);
-          uploads.push(fetch("/api/profile/upload", { method: "POST", body: f }));
-        }
-
-        if (images.partner.poster.file) {
-          const f = new FormData();
-          f.append("file", images.partner.poster.file);
-          f.append("id", user.partner.id);
-          uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
-        }
-
-        if (images.partner.anniversary.file) {
-          const f = new FormData();
-          f.append("file", images.partner.anniversary.file);
-          f.append("id", user.partner.id);
-          f.append("category", "anniversary");
-          uploads.push(fetch("/api/poster/upload", { method: "POST", body: f }));
-        }
-      }
-
-      await Promise.all(uploads);
-      onClose();
-    } catch (err) {
-      alert("Submit failed");
-    } finally {
-      setIsSubmitting(false);
-      setIsLoading(false);
+    // User uploads
+    if (images.user.profile.file) {
+      const f = new FormData();
+      f.append("file", images.user.profile.file);
+      f.append("id", user.id);
+      uploads.push(() => fetch("/api/profile/upload", { method: "POST", body: f }));
     }
-  };
+
+    if (images.user.poster.file) {
+      const f = new FormData();
+      f.append("file", images.user.poster.file);
+      f.append("id", user.id);
+      uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
+    }
+
+    if (images.user.anniversary.file) {
+      const f = new FormData();
+      f.append("file", images.user.anniversary.file);
+      f.append("id", user.id);
+      f.append("category", "anniversary");
+      uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
+    }
+
+    // Partner uploads
+    if (user.partner?.id) {
+      if (images.partner.profile.file) {
+        const f = new FormData();
+        f.append("file", images.partner.profile.file);
+        f.append("id", user.partner.id);
+        uploads.push(() => fetch("/api/profile/upload", { method: "POST", body: f }));
+      }
+
+      if (images.partner.poster.file) {
+        const f = new FormData();
+        f.append("file", images.partner.poster.file);
+        f.append("id", user.partner.id);
+        uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
+      }
+
+      if (images.partner.anniversary.file) {
+        const f = new FormData();
+        f.append("file", images.partner.anniversary.file);
+        f.append("id", user.partner.id);
+        f.append("category", "anniversary");
+        uploads.push(() => fetch("/api/poster/upload", { method: "POST", body: f }));
+      }
+    }
+
+    // Execute uploads one-by-one (not in parallel)
+    for (const upload of uploads) {
+      try {
+        await upload();
+      } catch (err) {
+        console.error("One of the uploads failed:", err);
+        throw new Error("Upload failed");
+      }
+    }
+
+    onClose();
+  } catch (err) {
+    console.error(err);
+    alert("Submit failed");
+  } finally {
+    setIsSubmitting(false);
+    setIsLoading(false);
+  }
+};
 
   const handleInputChange = (path, value) => {
     if (isLoading) return;
