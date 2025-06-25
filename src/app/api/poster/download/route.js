@@ -13,7 +13,7 @@ export async function POST(req) {
       )
     }
 
-    const { fileName } = await req.json()
+    const { fileName, category } = await req.json()
     
     if (!fileName) {
       return NextResponse.json(
@@ -21,9 +21,14 @@ export async function POST(req) {
         { status: 400 }
       )
     }
-    console.log("poster to download is"+fileName)
 
+    // Determine the correct filename based on category
     let finalFileName = fileName
+    if (category === 'anniversary') {
+      finalFileName += '_anniv.jpg'
+    } else {
+      finalFileName += '_poster.jpg'
+    }
 
     // Authenticate with MEGA
     const storage = new Storage({

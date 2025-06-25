@@ -22,12 +22,7 @@ export async function POST(req) {
         { status: 400 }
       )
     }
-
-    // Append .jpg if no extension is present
-    if (!fileName.toLowerCase().endsWith('.jpg')) {
       fileName += '.jpg'
-    }
-
     // Authenticate with MEGA
     const storage = new Storage({
       email: MEGA_EMAIL,
