@@ -7,6 +7,7 @@ export async function POST(request) {
         const formData = await request.formData();
         const file = formData.get('file');
         let id = formData.get('id');
+        let category = formData.get('category')
 
         if (!file) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
@@ -18,6 +19,14 @@ export async function POST(request) {
             id = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
         }
 
+        //   if(category){
+        //       console.log("category recieved"+category)
+        //               return NextResponse.json(
+        //       { error: 'category recieved'},
+        //       { status: 500 }
+        //   );
+        //   }
+
         const fileBuffer = Buffer.from(await file.arrayBuffer());
 
         // Initialize MEGA storage
@@ -26,7 +35,7 @@ export async function POST(request) {
             password: process.env.MEGA_PASSWORD,
         }).ready;
 
-        const jpgFilename = `${id}_poster.jpg`;
+        const jpgFilename = category ? `${id}_anniv.jpg` : `${id}_poster.jpg`;
 
         // Check if a file with the same name exists and delete it
         const existingFile = storage.root.children.find(child => child.name === jpgFilename);
@@ -38,11 +47,18 @@ export async function POST(request) {
         const uploadedFile = await storage.upload(jpgFilename, fileBuffer).complete;
 
         // Update Supabase record to set profile: true
-        const { error: dbError } = await supabase
-            .from("user")
-            .update({ poster: true })
-            .eq("id", id);
-
+        let dbError;
+        if (category) {
+            ({ error: dbError } = await supabase
+                .from("user")
+                .update({ annposter: true })
+                .eq("id", id));
+        } else {
+            ({ error: dbError } = await supabase
+                .from("user")
+                .update({ poster: true })
+                .eq("id", id));
+        }
         if (dbError) {
             console.error('Supabase update error:', dbError);
             return NextResponse.json(
