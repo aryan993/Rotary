@@ -187,7 +187,7 @@ export async function POST(request) {
       return html;
     }
 
-    htmlTable += await generateCardsSection('Birthday', birthdayData, (record) => ({
+    htmlTable += await generateCardsSection("Member's Birthday", birthdayData, (record) => ({
       name: record.name || '',
       extraFields: [
         { label: 'Post:', value: record.role },
@@ -206,7 +206,7 @@ export async function POST(request) {
       ],
     }));
 
-    htmlTable += await generateCardsSection('Anniversary', anniversaries, (record) => ({
+    htmlTable += await generateCardsSection('Wedding Anniversary', anniversaries, (record) => ({
       name: `${record.name} & ${record?.partner?.name}` || '',
       extraFields: [
         { label: 'Post:', value: record.role },
