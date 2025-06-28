@@ -51,6 +51,7 @@ export async function GET(request) {
         .eq("type", "member")
         .gte("dob", from_date)
         .lte("dob", to_date)
+        .eq('active', 'True')
         .order("dob", { ascending: true });
     } else if (filterType === "birthday" && type === "spouse") {
       query = supabase
@@ -59,14 +60,17 @@ export async function GET(request) {
         .eq("type", "spouse")
         .gte("dob", from_date)
         .lte("dob", to_date)
+        .eq('active', 'True')
         .order("dob", { ascending: true });
     } else {
       query = supabase
         .from("user")
-        .select(`id, name, type, email, phone, anniversary, profile,annposter,tbam, partner:partner_id (id, name, type, profile)`)
+        .select(`id, name, type, email, phone, anniversary, profile,annposter,tbam, partner:partner_id (id, name, type, profile,active)`)
         .eq("type", "member")
         .gte("anniversary", from_date)
         .lte("anniversary", to_date)
+        .eq('active', 'True')
+        .eq('partner.active', 'True')
         .order("anniversary", { ascending: true });
     }
 

@@ -356,7 +356,7 @@ async function fetchByType(date, type) {
         .eq('active', 'True');
     } else if (type === 'anniversary') {
       query = query
-        .select('id,name,club,email,phone,role,partner:partner_id (id,name,club,email,phone)')
+        .select('id,name,club,email,phone,role,partner:partner_id (id,name,club,email,phone,active)')
         .eq('type', 'member')
         .eq('anniversary', date)
         .eq('active', 'True')
