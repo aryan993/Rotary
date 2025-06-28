@@ -45,6 +45,11 @@ function Navbar() {
             </select>
           </li>
           <li>
+            <Link href="/dashboard/personalemails">
+              <span className="hover:text-gray-200 cursor-pointer">Personal Emails</span>
+            </Link>
+          </li>
+          <li>
             <Link href="/dashboard/member">
               <span className="hover:text-gray-200 cursor-pointer">Member</span>
             </Link>
