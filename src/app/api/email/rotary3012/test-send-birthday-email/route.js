@@ -17,7 +17,6 @@ export async function POST(request) {
       return Response.json({ message: 'Invalid request data' }, { status: 400 });
     }
 
-    // Fetch all 3 types of data
     const [birthdayData, spouseBirthdays, anniversaries] = await Promise.all([
       fetchByType(date, 'member'),
       fetchByType(date, 'spouse'),
@@ -33,7 +32,7 @@ export async function POST(request) {
     const files = storage.root.children || [];
     const attachments = [];
 
-    const congratsFile = files.find(f => f.name === 'Congratulations.png');
+    const congratsFile = files.find(f => f.name === 'try.gif');
     let congratsCid = '';
 
     if (congratsFile) {
@@ -45,14 +44,15 @@ export async function POST(request) {
           .on('error', reject);
       });
 
-      congratsCid = 'congratulations-image';
+      congratsCid = 'congratulations-gif';
       attachments.push({
         filename: congratsFile.name,
         content: buffer,
         cid: congratsCid,
       });
     }
-    const today = formatFullDate(date)
+
+    const today = formatFullDate(date);
 
     let htmlTable = `
     <!DOCTYPE html>
@@ -66,7 +66,7 @@ export async function POST(request) {
         <div style="max-width: 900px; margin: auto; padding: 20px; box-sizing: border-box;">
           <div style="margin-bottom: 30px;">
             ${congratsCid ? `<div style="text-align: center; margin-bottom: 30px;">
-              <img src="cid:${congratsCid}" style="max-width: 100%; height: auto;" />
+              <img src="cid:${congratsCid}" style="max-width: 100%; height: auto;" alt="Celebration Image" />
             </div>` : ''}
             <p>Dear Esteemed Rotary Leaders,</p>
             <p>Warm greetings from the Rotary family of District 3012!</p>
@@ -176,7 +176,7 @@ export async function POST(request) {
                   <div style="display: flex; gap: 40px;">
                     <div>${renderFields(details.extraFields)}</div>
                   </div>` :
-            `${renderFields(details.extraFields)}`}
+          `${renderFields(details.extraFields)}`}
               </div>
             </div>
           </div>
@@ -217,79 +217,48 @@ export async function POST(request) {
       partnerName: record?.partner?.name || '',
     }), true);
 
-    // Fetch 006.jpg (logo below "Team Influencer 2025-26")
     const logo006 = files.find(f => f.name === '006.jpg');
     let logo006Cid = '';
     if (logo006) {
       const buffer = await new Promise((resolve, reject) => {
         const chunks = [];
-        logo006.download()
-          .on('data', chunk => chunks.push(chunk))
-          .on('end', () => resolve(Buffer.concat(chunks)))
-          .on('error', reject);
+        logo006.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
       });
       logo006Cid = 'logo-006';
-      attachments.push({
-        filename: logo006.name,
-        content: buffer,
-        cid: logo006Cid,
-      });
+      attachments.push({ filename: logo006.name, content: buffer, cid: logo006Cid });
     }
 
-    // Fetch 007.jpg (logo before "Designed and Maintained by")
     const logo007 = files.find(f => f.name === '007.jpg');
     let logo007Cid = '';
     if (logo007) {
       const buffer = await new Promise((resolve, reject) => {
         const chunks = [];
-        logo007.download()
-          .on('data', chunk => chunks.push(chunk))
-          .on('end', () => resolve(Buffer.concat(chunks)))
-          .on('error', reject);
+        logo007.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
       });
       logo007Cid = 'logo-007';
-      attachments.push({
-        filename: logo007.name,
-        content: buffer,
-        cid: logo007Cid,
-      });
+      attachments.push({ filename: logo007.name, content: buffer, cid: logo007Cid });
     }
 
-    // Fetch 008.jpg (logo before "Designed and Maintained by")
     const logo008 = files.find(f => f.name === '008.jpg');
     let logo008Cid = '';
     if (logo008) {
       const buffer = await new Promise((resolve, reject) => {
         const chunks = [];
-        logo008.download()
-          .on('data', chunk => chunks.push(chunk))
-          .on('end', () => resolve(Buffer.concat(chunks)))
-          .on('error', reject);
+        logo008.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
       });
       logo008Cid = 'logo-008';
-      attachments.push({
-        filename: logo008.name,
-        content: buffer,
-        cid: logo008Cid,
-      });
+      attachments.push({ filename: logo008.name, content: buffer, cid: logo008Cid });
     }
-    // Fetch 009.jpg (logo before "Designed and Maintained by")
+
     const logo009 = files.find(f => f.name === '009.jpg');
     let logo009Cid = '';
     if (logo009) {
       const buffer = await new Promise((resolve, reject) => {
         const chunks = [];
-        logo009.download()
-          .on('data', chunk => chunks.push(chunk))
-          .on('end', () => resolve(Buffer.concat(chunks)))
-          .on('error', reject);
+        logo009.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
       });
       logo009Cid = 'logo-009';
-      attachments.push({
-        filename: logo009.name,
-        content: buffer,
-        cid: logo009Cid,
-      });
+      attachments.push({ filename: logo009.name, content: buffer, cid: logo009Cid });
     }
 
     htmlTable += `
@@ -323,22 +292,18 @@ export async function POST(request) {
         </tr>
       </table>
     </div>
-<div style="text-align: center; margin: 40px 0; font-family: Arial, sans-serif; font-size: 14px; color: #777;">
-  If you would prefer not to receive these emails, please
-  <strong>click the unsubscribe link at the bottom of this email</strong>.
-</div>
+    <div style="text-align: center; margin: 40px 0; font-family: Arial, sans-serif; font-size: 14px; color: #777;">
+      If you would prefer not to receive these emails, please
+      <strong>click the unsubscribe link at the bottom of this email</strong>.
+    </div>
   </div>
 </div></body></html>`;
 
-    // ✅ Elastic Email SMTP configuration
     const transporter = nodemailer.createTransport({
       host: 'smtp.elasticemail.com',
       port: 587,
       secure: false,
-      auth: {
-        user: SMTP_USER,
-        pass: ELASTIC_KEY,
-      },
+      auth: { user: SMTP_USER, pass: ELASTIC_KEY },
     });
 
     const email_list = EMAIL_TEST.split(',').map(email => email.trim());
@@ -347,7 +312,7 @@ export async function POST(request) {
       await transporter.sendMail({
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
         to: recipient,
-        replyTo: 'rtndramitaanilmohindru@gmail.com',
+        replyTo: 'amitadg2526rid3012@gmail.com',
         subject: `Birthday and Anniversary Notification ${today}`,
         html: htmlTable,
         attachments,
@@ -360,7 +325,6 @@ export async function POST(request) {
       });
       console.log("email sent to " + recipient);
     }
-
 
     return Response.json({
       message: 'Email sent successfully',
@@ -404,15 +368,9 @@ async function fetchByType(date, type) {
     }
 
     const { data, error } = await query;
+    if (error) throw error;
 
-    if (error) {
-      console.error("Supabase query error:", error);
-      throw error;
-    }
-
-    if (!data || data.length === 0) {
-      return [];
-    }
+    if (!data || data.length === 0) return [];
 
     if (type === 'anniversary') {
       const uniquePairs = new Set();
@@ -427,7 +385,6 @@ async function fetchByType(date, type) {
     }
 
     return data;
-
   } catch (err) {
     console.error("fetchByType error:", err);
     return [];
