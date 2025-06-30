@@ -5,18 +5,19 @@ import { formatFullDate } from "@/lib/utils";
 
 export async function POST(request) {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_FROM,EMAIL_TEST } = process.env;
-    const { date } = await request.json();
+    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_FROM } = process.env;
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_FROM) {
       return Response.json({ message: 'Server configuration error' }, { status: 500 });
     }
 
-    if (!date) {
-      return Response.json({ message: 'Invalid request data' }, { status: 400 });
-    }
-
-    const normalizedDate = `2000-${date.slice(5)}`; // Convert to 2000-MM-DD
+    // Get today's date in IST and normalize to 2000-MM-DD
+    const istNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const year = istNow.getFullYear();
+    const month = String(istNow.getMonth() + 1).padStart(2, '0');
+    const day = String(istNow.getDate()).padStart(2, '0');
+    const normalizedDate = `2000-${month}-${day}`;
+    const today = formatFullDate(`${year}-${month}-${day}`);
 
     const [birthdayData, spouseBirthdays, anniversaries] = await Promise.all([
       fetchByType(normalizedDate, 'member'),
@@ -45,7 +46,6 @@ export async function POST(request) {
       ...anniversaries.map(r => ({ ...r, type: 'anniversary' })),
     ];
 
-    const today = formatFullDate(date);
     let sentCount = 0;
 
     for (const user of allRecipients) {
@@ -145,6 +145,7 @@ export async function POST(request) {
     return Response.json({
       message: 'Emails sent successfully',
       count: sentCount,
+      dateUsed: normalizedDate
     });
 
   } catch (error) {
@@ -156,16 +157,26 @@ export async function POST(request) {
 async function fetchByType(date, type) {
   try {
     let query = supabase.from('user');
+    let processedData = [];
 
     if (type === 'member') {
-      query = query.select('id, name, club, phone, email, role')
-        .eq('type', 'member').eq('dob', date).eq('active', 'True').eq('poster', 'True').neq('email', 'NULL');
+      query = query
+        .select('id, name, club, phone, email, role')
+        .eq('type', 'member')
+        .eq('dob', date)
+        .eq('active', true);
     } else if (type === 'spouse') {
-      query = query.select('id, name, club, phone, email, partner:partner_id (id, name)')
-        .eq('type', 'spouse').eq('dob', date).eq('active', 'True').eq('poster', 'True').neq('email', 'NULL');
+      query = query
+        .select('id, name, club, phone, email, partner:partner_id (id, name)')
+        .eq('type', 'spouse')
+        .eq('dob', date)
+        .eq('active', true);
     } else if (type === 'anniversary') {
-      query = query.select('id, name, club, email, phone, role, partner:partner_id (id, name, club, email, phone)')
-        .eq('type', 'member').eq('anniversary', date).eq('active', 'True').eq('partner.active', 'True').eq('annposter', 'True').neq('email', 'NULL');
+      query = query
+        .select('id, name, club, email, phone, role, partner:partner_id (id, name, club, email, phone, active)')
+        .eq('type', 'member')
+        .eq('anniversary', date)
+        .eq('active', true);
     } else {
       throw new Error("Invalid type provided");
     }
@@ -175,19 +186,24 @@ async function fetchByType(date, type) {
 
     if (!data || data.length === 0) return [];
 
-    if (type === 'anniversary') {
+    processedData = data;
+
+    if (type === "anniversary") {
       const uniquePairs = new Set();
-      return data.filter(item => {
-        if (!item.partner) return true;
-        const key1 = `${item.id}-${item.partner.id}`;
-        const key2 = `${item.partner.id}-${item.id}`;
-        if (uniquePairs.has(key2)) return false;
-        uniquePairs.add(key1);
+      processedData = data.filter((item) => {
+        // Ensure both member and partner are active
+        if (!item.partner || item.partner.active !== true) return false;
+
+        const pairKey1 = `${item.id}-${item.partner.id}`;
+        const pairKey2 = `${item.partner.id}-${item.id}`;
+        if (uniquePairs.has(pairKey2)) return false;
+
+        uniquePairs.add(pairKey1);
         return true;
       });
     }
 
-    return data;
+    return processedData;
   } catch (err) {
     console.error("fetchByType error:", err);
     return [];
@@ -196,8 +212,13 @@ async function fetchByType(date, type) {
 
 function toTitleCase(str) {
   if (!str || typeof str !== 'string') return '';
-  return str.toLowerCase()
+  return str
     .split(' ')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .map(word => {
+      const lower = word.toLowerCase();
+      if (lower === 'pdg') return 'PDG';
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
     .join(' ');
 }
+
