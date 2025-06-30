@@ -399,8 +399,12 @@ async function fetchByType(date, type) {
 function toTitleCase(str) {
   if (!str || typeof str !== 'string') return '';
   return str
-    .toLowerCase()
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(word => {
+      const lower = word.toLowerCase();
+      if (lower === 'pdg') return 'PDG';
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
     .join(' ');
 }
+
