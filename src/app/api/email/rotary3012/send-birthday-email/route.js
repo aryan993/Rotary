@@ -320,7 +320,7 @@ export async function POST(request) {
     for (const recipient of email_list) {
       await transporter.sendMail({
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
-        to: "bansalaryan2000@gmail.com",
+        to: recipient,
         replyTo: 'amitadg2526rid3012@gmail.com',
         subject: `Birthday and Anniversary Notification ${today}`,
         html: htmlTable,
