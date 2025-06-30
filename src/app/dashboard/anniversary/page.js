@@ -184,7 +184,7 @@ export default function User() {
                       ${row.partner?.profile ? "bg-green-600" : "bg-red-600"}
                     `}
                   >
-                    {row.partner.profile ? "Uploaded" : "Missing"}
+                    {row.partner?.profile ? "Uploaded" : "Missing"}
                   </button>
                 </td>
                 <td className="border px-4 py-2">
