@@ -6,7 +6,7 @@ import { formatFullDate } from "@/lib/utils";
 
 export async function POST(request) {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO, EMAIL_FROM, EMAIL_TEST } = process.env;
+    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO, EMAIL_FROM } = process.env;
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_TO) {
       return Response.json({ message: 'Server configuration error' }, { status: 500 });
@@ -174,7 +174,7 @@ export async function POST(request) {
                   <div style="display: flex; gap: 40px;">
                     <div>${renderFields(details.extraFields)}</div>
                   </div>` :
-          `${renderFields(details.extraFields)}`}
+            `${renderFields(details.extraFields)}`}
               </div>
             </div>
           </div>
@@ -304,7 +304,16 @@ export async function POST(request) {
       auth: { user: SMTP_USER, pass: ELASTIC_KEY },
     });
 
-    const email_list = EMAIL_TEST.split(',').map(email => email.trim());
+    const { data: emailData, error: emailError } = await supabase
+      .from('user')
+      .select('email')
+      .eq('active', 'True')
+      .neq('email', null);
+
+    if (emailError) throw emailError;
+
+    const emailSet = new Set(emailData.map(d => d.email.trim()).filter(Boolean));
+    const email_list = Array.from(emailSet);
 
     for (const recipient of email_list) {
       await transporter.sendMail({
