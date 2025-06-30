@@ -317,23 +317,23 @@ export async function POST(request) {
     console.log(email_list.length)
     console.log(email_list)
 
-    //for (const recipient of email_list) {
-    //  await transporter.sendMail({
-    //    from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
-    //    to: recipient,
-    //    replyTo: 'amitadg2526rid3012@gmail.com',
-    //    subject: `Birthday and Anniversary Notification ${today}`,
-    //    html: htmlTable,
-    //    attachments,
-    //    headers: {
-    //      'X-ElasticEmail-Settings': JSON.stringify({
-    //        UnsubscribeLinkText: '',
-    //        UnsubscribeLinkType: 'None'
-    //      })
-    //    }
-    //  });
-    //  console.log("email sent to " + recipient);
-    //}
+    for (const recipient of email_list) {
+      await transporter.sendMail({
+        from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
+        to: "bansalaryan2000@gmail.com",
+        replyTo: 'amitadg2526rid3012@gmail.com',
+        subject: `Birthday and Anniversary Notification ${today}`,
+        html: htmlTable,
+        attachments,
+        headers: {
+          'X-ElasticEmail-Settings': JSON.stringify({
+            UnsubscribeLinkText: '',
+            UnsubscribeLinkType: 'None'
+          })
+        }
+      });
+      console.log("email sent to " + recipient);
+    }
 
     return Response.json({
       message: 'Email sent successfully',
@@ -352,26 +352,26 @@ export async function POST(request) {
 async function fetchByType(date, type) {
   try {
     let query = supabase.from('user');
+    let processedData = [];
 
     if (type === 'member') {
       query = query
-        .select('id, name, club, phone, email,role')
+        .select('id, name, club, phone, email, role')
         .eq('type', 'member')
         .eq('dob', date)
-        .eq('active', 'True');
+        .eq('active', true);
     } else if (type === 'spouse') {
       query = query
-        .select('id, name, club, phone, email,partner:partner_id (id,name)')
+        .select('id, name, club, phone, email, partner:partner_id (id, name)')
         .eq('type', 'spouse')
         .eq('dob', date)
-        .eq('active', 'True');
+        .eq('active', true);
     } else if (type === 'anniversary') {
       query = query
-        .select('id,name,club,email,phone,role,partner:partner_id (id,name,club,email,phone,active)')
+        .select('id, name, club, email, phone, role, partner:partner_id (id, name, club, email, phone, active)')
         .eq('type', 'member')
         .eq('anniversary', date)
-        .eq('active', 'True')
-        .eq('partner.active', 'True');
+        .eq('active', true);
     } else {
       throw new Error("Invalid type provided");
     }
@@ -381,16 +381,18 @@ async function fetchByType(date, type) {
 
     if (!data || data.length === 0) return [];
 
-    let processedData = data;
+    processedData = data;
+
     if (type === "anniversary") {
       const uniquePairs = new Set();
       processedData = data.filter((item) => {
-        // Skip if partner is missing or inactive
+        // Ensure both member and partner are active
         if (!item.partner || item.partner.active !== true) return false;
 
         const pairKey1 = `${item.id}-${item.partner.id}`;
         const pairKey2 = `${item.partner.id}-${item.id}`;
         if (uniquePairs.has(pairKey2)) return false;
+
         uniquePairs.add(pairKey1);
         return true;
       });
