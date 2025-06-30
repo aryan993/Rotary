@@ -125,7 +125,7 @@ export async function POST(request) {
 
       await transporter.sendMail({
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
-        to: "bansalaryan2000@gmail.com,rtndkbhargava@gmail.com,prateekb@tbam.co.in",
+        to: userEmail,
         replyTo: 'amitadg2526rid3012@gmail.com',
         subject,
         html,
