@@ -50,6 +50,11 @@ function Navbar() {
             </Link>
           </li>
           <li>
+            <Link href="/dashboard/whatsapp">
+              <span className="hover:text-gray-200 cursor-pointer">Whatsapp</span>
+            </Link>
+          </li>
+          <li>
             <Link href="/dashboard/member">
               <span className="hover:text-gray-200 cursor-pointer">Member</span>
             </Link>

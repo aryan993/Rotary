@@ -51,7 +51,7 @@ export async function GET(request) {
         .eq("type", "member")
         .gte("dob", from_date)
         .lte("dob", to_date)
-        .eq('active', 'True')
+        .eq('active', true)
         .order("dob", { ascending: true });
     } else if (filterType === "birthday" && type === "spouse") {
       query = supabase
@@ -60,7 +60,7 @@ export async function GET(request) {
         .eq("type", "spouse")
         .gte("dob", from_date)
         .lte("dob", to_date)
-        .eq('active', 'True')
+        .eq('active', true)
         .order("dob", { ascending: true });
     } else {
       query = supabase
@@ -69,8 +69,8 @@ export async function GET(request) {
         .eq("type", "member")
         .gte("anniversary", from_date)
         .lte("anniversary", to_date)
-        .eq('active', 'True')
-        .eq('partner.active', 'True')
+        .eq('active', true)
+        .eq('partner.active', true)
         .order("anniversary", { ascending: true });
     }
 
@@ -89,7 +89,9 @@ export async function GET(request) {
     if (filterType === "anniversary") {
       const uniquePairs = new Set();
       processedData = data.filter((item) => {
-        if (!item.partner) return true;
+        // Skip if partner is missing or inactive
+        if (!item.partner || item.partner.active !== true) return false;
+
         const pairKey1 = `${item.id}-${item.partner.id}`;
         const pairKey2 = `${item.partner.id}-${item.id}`;
         if (uniquePairs.has(pairKey2)) return false;

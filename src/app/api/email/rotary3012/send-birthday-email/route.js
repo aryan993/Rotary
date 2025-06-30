@@ -307,31 +307,33 @@ export async function POST(request) {
     const { data: emailData, error: emailError } = await supabase
       .from('user')
       .select('email')
-      .eq('active', 'True')
+      .eq('active', true)
       .neq('email', null);
 
     if (emailError) throw emailError;
 
     const emailSet = new Set(emailData.map(d => d.email.trim()).filter(Boolean));
     const email_list = Array.from(emailSet);
+    console.log(email_list.length)
+    console.log(email_list)
 
-    for (const recipient of email_list) {
-      await transporter.sendMail({
-        from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
-        to: recipient,
-        replyTo: 'amitadg2526rid3012@gmail.com',
-        subject: `Birthday and Anniversary Notification ${today}`,
-        html: htmlTable,
-        attachments,
-        headers: {
-          'X-ElasticEmail-Settings': JSON.stringify({
-            UnsubscribeLinkText: '',
-            UnsubscribeLinkType: 'None'
-          })
-        }
-      });
-      console.log("email sent to " + recipient);
-    }
+    //for (const recipient of email_list) {
+    //  await transporter.sendMail({
+    //    from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
+    //    to: recipient,
+    //    replyTo: 'amitadg2526rid3012@gmail.com',
+    //    subject: `Birthday and Anniversary Notification ${today}`,
+    //    html: htmlTable,
+    //    attachments,
+    //    headers: {
+    //      'X-ElasticEmail-Settings': JSON.stringify({
+    //        UnsubscribeLinkText: '',
+    //        UnsubscribeLinkType: 'None'
+    //      })
+    //    }
+    //  });
+    //  console.log("email sent to " + recipient);
+    //}
 
     return Response.json({
       message: 'Email sent successfully',
@@ -379,19 +381,22 @@ async function fetchByType(date, type) {
 
     if (!data || data.length === 0) return [];
 
-    if (type === 'anniversary') {
+    let processedData = data;
+    if (type === "anniversary") {
       const uniquePairs = new Set();
-      return data.filter(item => {
-        if (!item.partner) return true;
-        const key1 = `${item.id}-${item.partner.id}`;
-        const key2 = `${item.partner.id}-${item.id}`;
-        if (uniquePairs.has(key2)) return false;
-        uniquePairs.add(key1);
+      processedData = data.filter((item) => {
+        // Skip if partner is missing or inactive
+        if (!item.partner || item.partner.active !== true) return false;
+
+        const pairKey1 = `${item.id}-${item.partner.id}`;
+        const pairKey2 = `${item.partner.id}-${item.id}`;
+        if (uniquePairs.has(pairKey2)) return false;
+        uniquePairs.add(pairKey1);
         return true;
       });
     }
 
-    return data;
+    return processedData;
   } catch (err) {
     console.error("fetchByType error:", err);
     return [];

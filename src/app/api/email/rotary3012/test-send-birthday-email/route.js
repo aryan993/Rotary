@@ -176,7 +176,7 @@ export async function POST(request) {
                   <div style="display: flex; gap: 40px;">
                     <div>${renderFields(details.extraFields)}</div>
                   </div>` :
-          `${renderFields(details.extraFields)}`}
+            `${renderFields(details.extraFields)}`}
               </div>
             </div>
           </div>
@@ -372,19 +372,21 @@ async function fetchByType(date, type) {
 
     if (!data || data.length === 0) return [];
 
-    if (type === 'anniversary') {
+    let processedData = data;
+    if (type === "anniversary") {
       const uniquePairs = new Set();
-      return data.filter(item => {
-        if (!item.partner) return true;
-        const key1 = `${item.id}-${item.partner.id}`;
-        const key2 = `${item.partner.id}-${item.id}`;
-        if (uniquePairs.has(key2)) return false;
-        uniquePairs.add(key1);
+      processedData = data.filter((item) => {
+        // Skip if partner is missing or inactive
+        if (!item.partner || item.partner.active !== true) return false;
+
+        const pairKey1 = `${item.id}-${item.partner.id}`;
+        const pairKey2 = `${item.partner.id}-${item.id}`;
+        if (uniquePairs.has(pairKey2)) return false;
+        uniquePairs.add(pairKey1);
         return true;
       });
     }
-
-    return data;
+    return processedData;
   } catch (err) {
     console.error("fetchByType error:", err);
     return [];
