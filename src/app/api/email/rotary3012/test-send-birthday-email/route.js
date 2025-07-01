@@ -112,23 +112,23 @@ export async function POST(request) {
       });
 
       html += `<td width="50%" valign="top" style="padding: 0;">`;
-      
+
       // Process first column
       for (const record of column1) {
         html += await generateCard(record, getDetailsFn, isAnniversary);
       }
-      
+
       html += `</td>`;
       html += `<td width="50%" valign="top" style="padding: 0;">`;
-      
+
       // Process second column
       for (const record of column2) {
         html += await generateCard(record, getDetailsFn, isAnniversary);
       }
-      
+
       html += `</td>`;
       html += `</tr>`;
-      
+
       html += `
                         </table>
                       </td>
@@ -142,90 +142,90 @@ export async function POST(request) {
     }
 
     async function generateCard(record, getDetailsFn, isAnniversary = false) {
-  const imageName = `${record.id}.jpg`;
-  const partnerImageName = record?.partner?.id ? `${record.partner.id}.jpg` : null;
-  const defaultImageName = '0.jpg';
+      const imageName = `${record.id}.jpg`;
+      const partnerImageName = record?.partner?.id ? `${record.partner.id}.jpg` : null;
+      const defaultImageName = '0.jpg';
 
-  const file = files.find(f => f.name === imageName) || files.find(f => f.name === defaultImageName);
-  const partnerFile = partnerImageName ? (files.find(f => f.name === partnerImageName) || files.find(f => f.name === defaultImageName)) : null;
+      const file = files.find(f => f.name === imageName) || files.find(f => f.name === defaultImageName);
+      const partnerFile = partnerImageName ? (files.find(f => f.name === partnerImageName) || files.find(f => f.name === defaultImageName)) : null;
 
-  let mainCid = '';
-  let partnerCid = '';
+      let mainCid = '';
+      let partnerCid = '';
 
-  if (file) {
-    const buffer = await new Promise((resolve, reject) => {
-      const chunks = [];
-      file.download()
-        .on('data', chunk => chunks.push(chunk))
-        .on('end', () => resolve(Buffer.concat(chunks)))
-        .on('error', reject);
-    });
+      if (file) {
+        const buffer = await new Promise((resolve, reject) => {
+          const chunks = [];
+          file.download()
+            .on('data', chunk => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
 
-    mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
-    attachments.push({
-      filename: file.name,
-      content: buffer,
-      cid: mainCid,
-    });
-  }
+        mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
+        attachments.push({
+          filename: file.name,
+          content: buffer,
+          cid: mainCid,
+        });
+      }
 
-  if (partnerFile) {
-    const buffer = await new Promise((resolve, reject) => {
-      const chunks = [];
-      partnerFile.download()
-        .on('data', chunk => chunks.push(chunk))
-        .on('end', () => resolve(Buffer.concat(chunks)))
-        .on('error', reject);
-    });
+      if (partnerFile) {
+        const buffer = await new Promise((resolve, reject) => {
+          const chunks = [];
+          partnerFile.download()
+            .on('data', chunk => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
 
-    partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
-    attachments.push({
-      filename: partnerFile.name,
-      content: buffer,
-      cid: partnerCid,
-    });
-  }
+        partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
+        attachments.push({
+          filename: partnerFile.name,
+          content: buffer,
+          cid: partnerCid,
+        });
+      }
 
-  const details = getDetailsFn(record);
+      const details = getDetailsFn(record);
 
-  // Improved name display with controlled line breaks
-  const formatNameForDisplay = (name) => {
-    if (!name) return '&nbsp;';
-    
-    // For anniversary cards with partner names
-    if (isAnniversary && name.includes(' & ')) {
-      const [name1, name2] = name.split(' & ');
-      return `
+      // Improved name display with controlled line breaks
+      const formatNameForDisplay = (name) => {
+        if (!name) return '&nbsp;';
+
+        // For anniversary cards with partner names
+        if (isAnniversary && name.includes(' & ')) {
+          const [name1, name2] = name.split(' & ');
+          return `
         <span style="display: inline-block; width: 100%;">${toTitleCase(name1)} &</span>
         <span style="display: inline-block; width: 100%;">${toTitleCase(name2)}</span>
       `;
-    }
-    return toTitleCase(name);
-  };
+        }
+        return toTitleCase(name);
+      };
 
-  // Always show 5 rows of data with compact layout
-  const renderFields = (fields) => {
-    const availableFields = fields.filter(f => f.value && f.value !== 'NULL');
-    const rowsToShow = 5; // Fixed number of rows
-    
-    let html = '';
-    for (let i = 0; i < rowsToShow; i++) {
-      const field = availableFields[i] || { label: '', value: '' };
-      const displayValue = field.label === 'Email:' ? field.value : toTitleCase(field.value);
-      
-      html += `
+      // Always show 5 rows of data with compact layout
+      const renderFields = (fields) => {
+        const availableFields = fields.filter(f => f.value && f.value !== 'NULL');
+        const rowsToShow = 5; // Fixed number of rows
+
+        let html = '';
+        for (let i = 0; i < rowsToShow; i++) {
+          const field = availableFields[i] || { label: '', value: '' };
+          const displayValue = field.label === 'Email:' ? field.value : toTitleCase(field.value);
+
+          html += `
         <tr>
           <td style="padding: 0; font-size: 14px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; height: 18px; line-height: 1;">
             <strong>${field.label || '&nbsp;'}</strong>${displayValue || '&nbsp;'}
           </td>
         </tr>
       `;
-    }
-    return html;
-  };
+        }
+        return html;
+      };
 
-  // Fixed size card with compact layout
-  let cardHtml = `
+      // Fixed size card with compact layout
+      let cardHtml = `
     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 15px; background-color: #c4e6f8; border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; height: 160px;">
       <tr>
         <td style="padding: 10px;">
@@ -270,8 +270,8 @@ export async function POST(request) {
     </table>
   `;
 
-  return cardHtml;
-}
+      return cardHtml;
+    }
     // Generate sections
     htmlTable += await generateCardsSection("Member's Birthday", birthdayData, (record) => ({
       name: record.name || '',
@@ -287,6 +287,7 @@ export async function POST(request) {
       name: record.name || '',
       extraFields: [
         { label: "Partner:", value: record?.partner?.name },
+        { label: 'Club:', value: record?.club },
         { label: 'Phone:', value: record.phone },
         { label: 'Email:', value: record.email },
       ],
@@ -359,19 +360,29 @@ export async function POST(request) {
                         </p>
                         
                         <!-- Left-aligned logos (009, 006, 008) -->
-                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 10px 0;">
-                          <tr>
-                            <td align="left">
-                              <table border="0" cellspacing="0" cellpadding="0" style="display: inline;">
-                                <tr>
-                                  ${logo009Cid ? `<td style="padding-right: 10px;"><img src="cid:${logo009Cid}" style="max-height: 60px; vertical-align: middle; display: inline-block;" alt="Team Logo" /></td>` : ''}
-                                  ${logo006Cid ? `<td style="padding-right: 10px;"><img src="cid:${logo006Cid}" style="max-height: 60px; vertical-align: middle; display: inline-block;" alt="Team Logo" /></td>` : ''}
-                                  ${logo008Cid ? `<td><img src="cid:${logo008Cid}" style="max-height: 60px; vertical-align: middle; display: inline-block;" alt="Team Logo" /></td>` : ''}
-                                </tr>
-                              </table>
-                            </td>
-                          </tr>
-                        </table>
+<table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 10px 0;">
+  <tr>
+    <td align="left">
+      <table border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          ${logo009Cid ? `
+          <td style="padding-right: 10px; vertical-align: middle;">
+            <img src="cid:${logo009Cid}" style="max-height: 60px; display: block;" alt="Team Logo" />
+          </td>` : ''}
+          ${logo006Cid ? `
+          <td style="padding-right: 10px; vertical-align: middle;">
+            <img src="cid:${logo006Cid}" style="max-height: 60px; display: block;" alt="Team Logo" />
+          </td>` : ''}
+          ${logo008Cid ? `
+          <td style="vertical-align: middle;">
+            <img src="cid:${logo008Cid}" style="max-height: 60px; display: block;" alt="Team Logo" />
+          </td>` : ''}
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
                         
                         <!-- Centered "Designed and Maintained by" section -->
                         <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 20px;">
