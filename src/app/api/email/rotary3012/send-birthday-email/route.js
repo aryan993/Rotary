@@ -304,20 +304,33 @@ export async function POST(request) {
       auth: { user: SMTP_USER, pass: ELASTIC_KEY },
     });
 
-    const { data: emailData, error: emailError } = await supabase
-      .from('user')
-      .select('email')
-      .eq('active', true)
-      .neq('email', null);
+    let allEmails = [];
+    let from = 0;
+    const batchSize = 1000;
 
-    if (emailError) throw emailError;
+    while (true) {
+      const { data, error } = await supabase
+        .from('user')
+        .select('email')
+        .eq('active', true)
+        .neq('email', null)
+        .range(from, from + batchSize - 1);
 
-    const emailSet = new Set(emailData.map(d => d.email.trim()).filter(Boolean));
-    const email_list = Array.from(emailSet);
-    console.log(email_list.length)
-    console.log(email_list)
+      if (error) {
+        console.error('Error fetching data:', error);
+        break;
+      }
 
-    for (const recipient of email_list) {
+      allEmails.push(...data);
+
+      if (data.length < batchSize) break; // No more data
+      from += batchSize;
+    }
+
+    const uniqueEmails = [...new Set(allEmails.map(e => e.email.trim()))];
+    console.log('Total unique emails:', uniqueEmails.length);
+
+    for (const recipient of uniqueEmails) {
       await transporter.sendMail({
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
         to: recipient,
