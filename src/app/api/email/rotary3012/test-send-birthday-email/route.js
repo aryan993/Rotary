@@ -55,138 +55,185 @@ export async function POST(request) {
     const today = formatFullDate(date);
 
     let htmlTable = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        </style>
-      </head>
-      <body>
-        <div style="max-width: 900px; margin: auto; padding: 20px; box-sizing: border-box;">
-          <div style="margin-bottom: 30px;">
-            ${congratsCid ? `<div style="text-align: center; margin-bottom: 30px;">
-              <img src="cid:${congratsCid}" style="max-width: 100%; height: auto;" alt="Celebration Image" />
-            </div>` : ''}
-            <p>Dear Esteemed Rotary Leaders,</p>
-            <p>Warm greetings from the Rotary family of District 3012!</p>
-            <p>On behalf of District Governor <strong>Rtn. Dr. Amita Mohindru</strong> and the distinguished <strong>Rtn. Dr. Capt. Anil Mohindru</strong>, we take great pleasure in extending our heartfelt wishes to all those celebrating their birthdays and wedding anniversaries today.</p>
-            <p>May your day be filled with joy, good health, and cherished moments of togetherness. This simple gesture is a celebration of the spirit of fellowship that binds us all.</p>
-            <p>Stay blessed, stay healthy, and keep inspiring!</p>
-          </div>
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+      <meta name="x-apple-disable-message-reformatting" />
+      <title>Birthday and Anniversary Notifications</title>
+    </head>
+    <body style="margin:0; padding:0; font-family: Arial, sans-serif; color: #333; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">
+      <!-- Main Container -->
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#f7f7f7">
+        <tr>
+          <td align="center" valign="top">
+            <!-- Email Container -->
+            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 900px;">
+              ${congratsCid ? `
+              <tr>
+                <td align="center" style="padding: 20px 0;">
+                  <img src="cid:${congratsCid}" alt="Celebration Image" style="max-width: 100%; height: auto;" />
+                </td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding: 20px;">
+                  <p style="margin: 0 0 15px 0; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">Dear Esteemed Rotary Leaders,</p>
+                  <p style="margin: 0 0 15px 0; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">Warm greetings from the Rotary family of District 3012!</p>
+                  <p style="margin: 0 0 15px 0; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">On behalf of District Governor <strong>Rtn. Dr. Amita Mohindru</strong> and the distinguished <strong>Rtn. Dr. Capt. Anil Mohindru</strong>, we take great pleasure in extending our heartfelt wishes to all those celebrating their birthdays and wedding anniversaries today.</p>
+                  <p style="margin: 0 0 15px 0; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">May your day be filled with joy, good health, and cherished moments of togetherness. This simple gesture is a celebration of the spirit of fellowship that binds us all.</p>
+                  <p style="margin: 0 0 30px 0; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">Stay blessed, stay healthy, and keep inspiring!</p>
     `;
 
-    async function generateCardsSection(title, records, getDetailsFn, sideBySide = false) {
+    async function generateCardsSection(title, records, getDetailsFn, isAnniversary = false) {
       if (!records || records.length === 0) return '';
 
       let html = `
-        <h2 style="font-family: Arial, sans-serif;">${title} on ${today}</h2>
-        <style>
-          .card-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-          }
-
-          .card {
-            flex: 1 1 calc(50% - 10px);
-            max-width: calc(50% - 10px);
-            padding: 10px;
-            box-sizing: border-box;
-          }
-
-          @media only screen and (max-width: 600px) {
-            .card {
-              flex: 1 1 100%;
-              max-width: 100%;
-            }
-          }
-        </style>
-        <div class="card-container">
+              <tr>
+                <td style="padding: 10px 0;">
+                  <h2 style="font-family: Arial, sans-serif; color: #333; margin: 0 0 15px 0; font-size: 20px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">${title} on ${today}</h2>
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td>
+                        <table width="100%" border="0" cellspacing="15" cellpadding="0">
+                          <tr>
       `;
 
-      for (const record of records) {
-        const imageName = `${record.id}.jpg`;
-        const partnerImageName = record?.partner?.id ? `${record.partner.id}.jpg` : null;
-        const defaultImageName = '0.jpg';
-
-        const file = files.find(f => f.name === imageName) || files.find(f => f.name === defaultImageName);
-        const partnerFile = partnerImageName ? (files.find(f => f.name === partnerImageName) || files.find(f => f.name === defaultImageName)) : null;
-
-        let mainCid = '';
-        let partnerCid = '';
-
-        if (file) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            file.download()
-              .on('data', chunk => chunks.push(chunk))
-              .on('end', () => resolve(Buffer.concat(chunks)))
-              .on('error', reject);
-          });
-
-          mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
-          attachments.push({
-            filename: file.name,
-            content: buffer,
-            cid: mainCid,
-          });
+      // Split into two columns for desktop view
+      let column1 = [];
+      let column2 = [];
+      records.forEach((record, index) => {
+        if (index % 2 === 0) {
+          column1.push(record);
+        } else {
+          column2.push(record);
         }
+      });
 
-        if (partnerFile) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            partnerFile.download()
-              .on('data', chunk => chunks.push(chunk))
-              .on('end', () => resolve(Buffer.concat(chunks)))
-              .on('error', reject);
-          });
-
-          partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
-          attachments.push({
-            filename: partnerFile.name,
-            content: buffer,
-            cid: partnerCid,
-          });
-        }
-
-        const details = getDetailsFn(record);
-
-        const renderFields = (fields) =>
-          fields
-            .filter(f => f.value && f.value !== 'NULL')
-            .map(f => `<p style="margin: 4px 0; font-size: 14px;"><strong>${f.label}</strong> ${toTitleCase(f.value)}</p>`)
-            .join('');
-
-        html += `
-          <div class="card">
-            <div style="background-color: rgba(196,230,248,1); border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; display: flex; padding: 10px; box-sizing: border-box;">
-              <div style="flex-shrink: 0; margin-right: 10px;">
-                <div style="display: flex; gap: 8px;">
-                  <img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />
-                  ${partnerCid ? `<img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover;" />` : ''}
-                </div>
-              </div>
-              <div>
-                <h3 style="margin: 0 0 4px 0; font-size: 16px;">${toTitleCase(details.name) || ''}</h3>
-                ${sideBySide && toTitleCase(details.partnerName) ? `
-                  <div style="display: flex; gap: 40px;">
-                    <div>${renderFields(details.extraFields)}</div>
-                  </div>` :
-            `${renderFields(details.extraFields)}`}
-              </div>
-            </div>
-          </div>
-        `;
+      html += `<td width="50%" valign="top" style="padding: 0;">`;
+      
+      // Process first column
+      for (const record of column1) {
+        html += await generateCard(record, getDetailsFn, isAnniversary);
       }
+      
+      html += `</td>`;
+      html += `<td width="50%" valign="top" style="padding: 0;">`;
+      
+      // Process second column
+      for (const record of column2) {
+        html += await generateCard(record, getDetailsFn, isAnniversary);
+      }
+      
+      html += `</td>`;
+      html += `</tr>`;
+      
+      html += `
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+      `;
 
-      html += '</div>';
       return html;
     }
 
+    async function generateCard(record, getDetailsFn, isAnniversary = false) {
+      const imageName = `${record.id}.jpg`;
+      const partnerImageName = record?.partner?.id ? `${record.partner.id}.jpg` : null;
+      const defaultImageName = '0.jpg';
+
+      const file = files.find(f => f.name === imageName) || files.find(f => f.name === defaultImageName);
+      const partnerFile = partnerImageName ? (files.find(f => f.name === partnerImageName) || files.find(f => f.name === defaultImageName)) : null;
+
+      let mainCid = '';
+      let partnerCid = '';
+
+      if (file) {
+        const buffer = await new Promise((resolve, reject) => {
+          const chunks = [];
+          file.download()
+            .on('data', chunk => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
+
+        mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
+        attachments.push({
+          filename: file.name,
+          content: buffer,
+          cid: mainCid,
+        });
+      }
+
+      if (partnerFile) {
+        const buffer = await new Promise((resolve, reject) => {
+          const chunks = [];
+          partnerFile.download()
+            .on('data', chunk => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
+
+        partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
+        attachments.push({
+          filename: partnerFile.name,
+          content: buffer,
+          cid: partnerCid,
+        });
+      }
+
+      const details = getDetailsFn(record);
+
+      const renderFields = (fields) =>
+        fields
+          .filter(f => f.value && f.value !== 'NULL')
+          .map(f => {
+            const displayValue = f.label === 'Email:' ? f.value : toTitleCase(f.value);
+            return `<tr><td style="padding: 2px 0; font-size: 14px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;"><strong>${f.label}</strong> ${displayValue}</td></tr>`;
+          })
+          .join('');
+
+      // Fixed height container with horizontal image layout
+      let cardHtml = `
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 15px; background-color: #c4e6f8; border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; height: 120px;">
+          <tr>
+            <td style="padding: 10px;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="height: 100%;">
+                <tr>
+                  <!-- Image Container -->
+                  <td width="${isAnniversary || record?.partner?.id ? '140' : '70'}" valign="middle" style="padding-right: 10px; text-align: center;">
+                    <table border="0" cellspacing="0" cellpadding="0" style="display: inline-block;">
+                      <tr>
+                        ${mainCid ? `<td style="padding-right: ${partnerCid ? '5px' : '0'};"><img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover; display: block;" /></td>` : ''}
+                        ${partnerCid ? `<td><img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover; display: block;" /></td>` : ''}
+                      </tr>
+                    </table>
+                  </td>
+                  
+                  <!-- Details Container -->
+                  <td valign="middle">
+                    <h3 style="font-family: Arial, sans-serif; font-size: 16px; margin: 0 0 5px 0; color: #333; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">
+                      ${toTitleCase(details.name) || ''}
+                    </h3>
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      ${renderFields(details.extraFields)}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      `;
+
+      return cardHtml;
+    }
+
+    // Generate sections
     htmlTable += await generateCardsSection("Member's Birthday", birthdayData, (record) => ({
       name: record.name || '',
       extraFields: [
@@ -214,9 +261,9 @@ export async function POST(request) {
         { label: 'Phone:', value: record.phone },
         { label: 'Email:', value: record.email },
       ],
-      partnerName: record?.partner?.name || '',
     }), true);
 
+    // Footer with left-aligned logos (009, 006, 008) and centered TBAM section
     const logo006 = files.find(f => f.name === '006.jpg');
     let logo006Cid = '';
     if (logo006) {
@@ -262,42 +309,75 @@ export async function POST(request) {
     }
 
     htmlTable += `
-  <hr style="margin: 40px 0;" />
-  <div style="font-family: Arial, sans-serif; font-size: 14px; color: #555;">
-    <p>With best wishes and regards,<br />
-      <strong>Team Influencer 2025-26</strong>
-    </p>
-
-    <div style="display: flex; justify-content: center; gap: 20px; margin: 10px 0;">
-      ${logo009Cid ? `<img src="cid:${logo009Cid}" style="max-height: 60px; margin: 0px 02px;" alt="Team Logo" />` : ''}  
-      ${logo006Cid ? `<img src="cid:${logo006Cid}" style="max-height: 60px; margin: 0px 02px;" alt="Team Logo" />` : ''}
-      ${logo008Cid ? `<img src="cid:${logo008Cid}" style="max-height: 60px; margin: 0px 02px;" alt="Team Logo" />` : ''}
-    </div>
-
-    <div style="margin-top: 20px;">
-      <table style="border-collapse: collapse; margin: 0 auto;">
-        <tr>
-          <td style="padding: 10px; border: none;">
-            ${logo007Cid ? `<img src="cid:${logo007Cid}" style="max-height: 60px;" alt="TBAM Logo" />` : ''}
-          </td>
-          <td style="border-left: 1px solid black; padding: 10px; vertical-align: middle; border-top: none; border-bottom: none; border-right: none;">
-            <p style="margin: 0;">
-              <em>Designed and Maintained by</em><br />
-              <strong>Tirupati Balaji Advertising & Marketing</strong><br />
-              (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava Ph:+919810522380)<br />
-              Founder and Charter President of RC Indirapuram Galore<br />
-              District Club Co-coordinator 2025-26
-            </p>
+              <tr>
+                <td style="padding: 20px 0;">
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="border-top: 1px solid #ddd; padding: 20px 0;">
+                        <p style="margin: 0 0 15px 0; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">
+                          With best wishes and regards,<br />
+                          <strong>Team Influencer 2025-26</strong>
+                        </p>
+                        
+                        <!-- Left-aligned logos (009, 006, 008) -->
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 10px 0;">
+                          <tr>
+                            <td align="left">
+                              <table border="0" cellspacing="0" cellpadding="0" style="display: inline;">
+                                <tr>
+                                  ${logo009Cid ? `<td style="padding-right: 10px;"><img src="cid:${logo009Cid}" style="max-height: 60px; vertical-align: middle; display: inline-block;" alt="Team Logo" /></td>` : ''}
+                                  ${logo006Cid ? `<td style="padding-right: 10px;"><img src="cid:${logo006Cid}" style="max-height: 60px; vertical-align: middle; display: inline-block;" alt="Team Logo" /></td>` : ''}
+                                  ${logo008Cid ? `<td><img src="cid:${logo008Cid}" style="max-height: 60px; vertical-align: middle; display: inline-block;" alt="Team Logo" /></td>` : ''}
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <!-- Centered "Designed and Maintained by" section -->
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 20px;">
+                          <tr>
+                            <td align="center">
+                              <table border="0" cellspacing="0" cellpadding="0" style="display: inline-block;">
+                                <tr>
+                                  <td style="padding: 10px 10px 10px 0; border: none;">
+                                    ${logo007Cid ? `<img src="cid:${logo007Cid}" style="max-height: 60px;" alt="TBAM Logo" />` : ''}
+                                  </td>
+                                  <td style="border-left: 1px solid #000; padding: 10px; vertical-align: middle; border-top: none; border-bottom: none; border-right: none;">
+                                    <p style="margin: 0; font-size: 12px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; color: #555; text-align: left;">
+                                      <em>Designed and Maintained by</em><br />
+                                      <strong>Tirupati Balaji Advertising & Marketing</strong><br />
+                                      (Director of TBAM Group Rtn Dr Dheeraj Kumar Bhargava Ph:+919810522380)<br />
+                                      Founder and Charter President of RC Indirapuram Galore<br />
+                                      District Club Co-coordinator 2025-26
+                                    </p>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 40px 0 0 0;">
+                          <tr>
+                            <td align="left" style="font-family: Arial, sans-serif; font-size: 12px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; color: #777;">
+                              If you would prefer not to receive these emails, please
+                              <strong>click the unsubscribe link at the bottom of this email</strong>.
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>
-    </div>
-    <div style="text-align: center; margin: 40px 0; font-family: Arial, sans-serif; font-size: 14px; color: #777;">
-      If you would prefer not to receive these emails, please
-      <strong>click the unsubscribe link at the bottom of this email</strong>.
-    </div>
-  </div>
-</div></body></html>`;
+    </body>
+    </html>
+    `;
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.elasticemail.com',
@@ -407,4 +487,3 @@ function toTitleCase(str) {
     })
     .join(' ');
 }
-
