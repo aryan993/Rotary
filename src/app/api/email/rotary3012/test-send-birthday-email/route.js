@@ -142,97 +142,136 @@ export async function POST(request) {
     }
 
     async function generateCard(record, getDetailsFn, isAnniversary = false) {
-      const imageName = `${record.id}.jpg`;
-      const partnerImageName = record?.partner?.id ? `${record.partner.id}.jpg` : null;
-      const defaultImageName = '0.jpg';
+  const imageName = `${record.id}.jpg`;
+  const partnerImageName = record?.partner?.id ? `${record.partner.id}.jpg` : null;
+  const defaultImageName = '0.jpg';
 
-      const file = files.find(f => f.name === imageName) || files.find(f => f.name === defaultImageName);
-      const partnerFile = partnerImageName ? (files.find(f => f.name === partnerImageName) || files.find(f => f.name === defaultImageName)) : null;
+  const file = files.find(f => f.name === imageName) || files.find(f => f.name === defaultImageName);
+  const partnerFile = partnerImageName ? (files.find(f => f.name === partnerImageName) || files.find(f => f.name === defaultImageName)) : null;
 
-      let mainCid = '';
-      let partnerCid = '';
+  let mainCid = '';
+  let partnerCid = '';
 
-      if (file) {
-        const buffer = await new Promise((resolve, reject) => {
-          const chunks = [];
-          file.download()
-            .on('data', chunk => chunks.push(chunk))
-            .on('end', () => resolve(Buffer.concat(chunks)))
-            .on('error', reject);
-        });
+  if (file) {
+    const buffer = await new Promise((resolve, reject) => {
+      const chunks = [];
+      file.download()
+        .on('data', chunk => chunks.push(chunk))
+        .on('end', () => resolve(Buffer.concat(chunks)))
+        .on('error', reject);
+    });
 
-        mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
-        attachments.push({
-          filename: file.name,
-          content: buffer,
-          cid: mainCid,
-        });
-      }
+    mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
+    attachments.push({
+      filename: file.name,
+      content: buffer,
+      cid: mainCid,
+    });
+  }
 
-      if (partnerFile) {
-        const buffer = await new Promise((resolve, reject) => {
-          const chunks = [];
-          partnerFile.download()
-            .on('data', chunk => chunks.push(chunk))
-            .on('end', () => resolve(Buffer.concat(chunks)))
-            .on('error', reject);
-        });
+  if (partnerFile) {
+    const buffer = await new Promise((resolve, reject) => {
+      const chunks = [];
+      partnerFile.download()
+        .on('data', chunk => chunks.push(chunk))
+        .on('end', () => resolve(Buffer.concat(chunks)))
+        .on('error', reject);
+    });
 
-        partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
-        attachments.push({
-          filename: partnerFile.name,
-          content: buffer,
-          cid: partnerCid,
-        });
-      }
+    partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
+    attachments.push({
+      filename: partnerFile.name,
+      content: buffer,
+      cid: partnerCid,
+    });
+  }
 
-      const details = getDetailsFn(record);
+  const details = getDetailsFn(record);
 
-      const renderFields = (fields) =>
-        fields
-          .filter(f => f.value && f.value !== 'NULL')
-          .map(f => {
-            const displayValue = f.label === 'Email:' ? f.value : toTitleCase(f.value);
-            return `<tr><td style="padding: 2px 0; font-size: 14px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;"><strong>${f.label}</strong> ${displayValue}</td></tr>`;
-          })
-          .join('');
-
-      // Fixed height container with horizontal image layout
-      let cardHtml = `
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 15px; background-color: #c4e6f8; border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; height: 120px;">
-          <tr>
-            <td style="padding: 10px;">
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="height: 100%;">
-                <tr>
-                  <!-- Image Container -->
-                  <td width="${isAnniversary || record?.partner?.id ? '140' : '70'}" valign="middle" style="padding-right: 10px; text-align: center;">
-                    <table border="0" cellspacing="0" cellpadding="0" style="display: inline-block;">
-                      <tr>
-                        ${mainCid ? `<td style="padding-right: ${partnerCid ? '5px' : '0'};"><img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover; display: block;" /></td>` : ''}
-                        ${partnerCid ? `<td><img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover; display: block;" /></td>` : ''}
-                      </tr>
-                    </table>
-                  </td>
-                  
-                  <!-- Details Container -->
-                  <td valign="middle">
-                    <h3 style="font-family: Arial, sans-serif; font-size: 16px; margin: 0 0 5px 0; color: #333; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">
-                      ${toTitleCase(details.name) || ''}
-                    </h3>
-                    <table border="0" cellspacing="0" cellpadding="0">
-                      ${renderFields(details.extraFields)}
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
+  // Improved name display with controlled line breaks
+  const formatNameForDisplay = (name) => {
+    if (!name) return '&nbsp;';
+    
+    // For anniversary cards with partner names
+    if (isAnniversary && name.includes(' & ')) {
+      const [name1, name2] = name.split(' & ');
+      return `
+        <span style="display: inline-block; width: 100%;">${toTitleCase(name1)} &</span>
+        <span style="display: inline-block; width: 100%;">${toTitleCase(name2)}</span>
       `;
-
-      return cardHtml;
     }
+    return toTitleCase(name);
+  };
 
+  // Always show 5 rows of data with compact layout
+  const renderFields = (fields) => {
+    const availableFields = fields.filter(f => f.value && f.value !== 'NULL');
+    const rowsToShow = 5; // Fixed number of rows
+    
+    let html = '';
+    for (let i = 0; i < rowsToShow; i++) {
+      const field = availableFields[i] || { label: '', value: '' };
+      const displayValue = field.label === 'Email:' ? field.value : toTitleCase(field.value);
+      
+      html += `
+        <tr>
+          <td style="padding: 0; font-size: 14px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; height: 18px; line-height: 1;">
+            <strong>${field.label || '&nbsp;'}</strong>${displayValue || '&nbsp;'}
+          </td>
+        </tr>
+      `;
+    }
+    return html;
+  };
+
+  // Fixed size card with compact layout
+  let cardHtml = `
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 15px; background-color: #c4e6f8; border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; height: 160px;">
+      <tr>
+        <td style="padding: 10px;">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="height: 100%;">
+            <tr>
+              <!-- Image Container with top margin (2 lines = ~16px) -->
+              <td width="140" valign="top" style="padding-right: 10px; text-align: center;">
+                <table border="0" cellspacing="0" cellpadding="0" style="display: inline-block; margin-top: 16px;">
+                  <tr>
+                    ${mainCid ? `<td style="padding-right: ${partnerCid ? '5px' : '0'};"><img src="cid:${mainCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover; display: block;" /></td>` : ''}
+                    ${partnerCid ? `<td><img src="cid:${partnerCid}" width="60" height="84" style="border-radius: 12px; object-fit: cover; display: block;" /></td>` : ''}
+                  </tr>
+                </table>
+              </td>
+              
+              <!-- Details Container -->
+              <td valign="top">
+                <table border="0" cellspacing="0" cellpadding="0" width="100%" style="height: 100%;">
+                  <!-- Name row with improved wrapping -->
+                  <tr>
+                    <td style="padding: 8px 0 4px 0; height: 36px; vertical-align: top;">
+                      <h3 style="font-family: Arial, sans-serif; font-size: 16px; margin: 0; color: #333; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; line-height: 1.3;">
+                        ${formatNameForDisplay(details.name)}
+                      </h3>
+                    </td>
+                  </tr>
+                  
+                  <!-- Data rows (compact layout) -->
+                  <tr>
+                    <td style="vertical-align: top; padding: 0;">
+                      <table border="0" cellspacing="0" cellpadding="0" width="100%" style="line-height: 1;">
+                        ${renderFields(details.extraFields)}
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return cardHtml;
+}
     // Generate sections
     htmlTable += await generateCardsSection("Member's Birthday", birthdayData, (record) => ({
       name: record.name || '',
