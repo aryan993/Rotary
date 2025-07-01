@@ -18,6 +18,7 @@ export async function POST(request) {
     const day = String(istNow.getDate()).padStart(2, '0');
     const normalizedDate = `2000-${month}-${day}`;
     const today = formatFullDate(`${year}-${month}-${day}`);
+    console.log(today)
 
     const [birthdayData, spouseBirthdays, anniversaries] = await Promise.all([
       fetchByType(normalizedDate, 'member'),
@@ -126,6 +127,7 @@ export async function POST(request) {
       await transporter.sendMail({
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
         to: userEmail,
+        bcc:"prateekbhargava1002@yahoo.com",
         replyTo: 'amitadg2526rid3012@gmail.com',
         subject,
         html,

@@ -3,18 +3,27 @@ import { Storage } from 'megajs';
 import nodemailer from 'nodemailer';
 import { supabase } from "@/app/utils/dbconnect";
 import { formatFullDate } from "@/lib/utils";
-import users from "../../../../utils/users" 
 
-export async function POST(request) {
+export async function POST() {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO, EMAIL_FROM } = process.env;
+    const { MEGA_EMAIL, MEGA_PASSWORD, SMTP_USER, ELASTIC_KEY, EMAIL_TO, EMAIL_FROM, EMAIL_TEST } = process.env;
 
     if (!MEGA_EMAIL || !MEGA_PASSWORD || !SMTP_USER || !ELASTIC_KEY || !EMAIL_TO) {
       return Response.json({ message: 'Server configuration error' }, { status: 500 });
     }
+const tomorrowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000); // shift to IST
+tomorrowIST.setDate(tomorrowIST.getDate());
 
-    const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-    const date = `2000-${String(nowIST.getMonth() + 1).padStart(2, '0')}-${String(nowIST.getDate()).padStart(2, '0')}`;
+const formatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Kolkata',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
+const [dd, mm, yyyy] = formatter.format(tomorrowIST).split('/');
+const date = `2000-${mm}-${dd}`;
+console.log(date);
 
     const [birthdayData, spouseBirthdays, anniversaries] = await Promise.all([
           fetchByType(date, 'member'),
@@ -428,155 +437,111 @@ export async function POST(request) {
         </html>
         `;
     
-    // ✅ Setup email transporter
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.elasticemail.com',
-      port: 587,
-      secure: false,
-      auth: { user: SMTP_USER, pass: ELASTIC_KEY }
-    });
-
-    // ✅ Send in batches with tracking
-    const { successCount, failureCount, failedRecipients } = await sendInBatches(users, 50, {
-      transporter,
-      html: htmlTable,
-      attachments,
-      EMAIL_FROM,
-      today
-    });
-
-    return Response.json({
-      message: 'Emails processed',
-      successCount,
-      failureCount,
-      failedRecipients
-    });
-
-  } catch (err) {
-    console.error("Send email error:", err);
-    return Response.json({ message: err.message }, { status: 500 });
-  }
-}
-
-// 🔁 Reusable helper to download MEGA buffer
-async function downloadBuffer(file) {
-  const chunks = [];
-  return await new Promise((resolve, reject) => {
-    file.download()
-      .on('data', chunk => chunks.push(chunk))
-      .on('end', () => resolve(Buffer.concat(chunks)))
-      .on('error', reject);
-  });
-}
-
-// ✅ Send emails in parallel batches
-async function sendInBatches(recipients, batchSize, { transporter, html, attachments, EMAIL_FROM, today }) {
-  let successCount = 0;
-  let failureCount = 0;
-  const failedRecipients = [];
-
-  for (let i = 0; i < recipients.length; i += batchSize) {
-    const batch = recipients.slice(i, i + batchSize);
-
-    const promises = batch.map(recipient =>
-      transporter.sendMail({
-        from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
-        to: recipient.email,
-        replyTo: 'amitadg2526rid3012@gmail.com',
-        subject: `Birthday and Anniversary Notification ${today}`,
-        html,
-        attachments,
-        headers: {
-          'X-ElasticEmail-Settings': JSON.stringify({
-            UnsubscribeLinkText: '',
-            UnsubscribeLinkType: 'None',
-            Channels: 'birthday-email',
-            IsTransactional: true,
-            TrackOpens: true,
-            TrackClicks: true
-          })
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.elasticemail.com',
+          port: 587,
+          secure: false,
+          auth: { user: SMTP_USER, pass: ELASTIC_KEY },
+        });
+    
+        const email_list = EMAIL_TEST.split(',').map(email => email.trim());
+    
+        for (const recipient of email_list) {
+          await transporter.sendMail({
+            from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
+            to: recipient,
+            replyTo: 'amitadg2526rid3012@gmail.com',
+            subject: `Advance email to cross check data`,
+            html: htmlTable,
+            attachments,
+            headers: {
+              'X-ElasticEmail-Settings': JSON.stringify({
+                UnsubscribeLinkText: '',
+                UnsubscribeLinkType: 'None'
+              })
+            }
+          });
+          console.log("email sent to " + recipient);
         }
-      }).then(() => {
-        console.log("✅ Sent to", recipient.email);
-        successCount++;
-      }).catch(err => {
-        console.error("❌ Failed to send to", recipient.email, err.message);
-        failureCount++;
-        failedRecipients.push({ email: recipient.email, error: err.message });
-      })
-    );
-
-    await Promise.all(promises);
-    await new Promise(r => setTimeout(r, 1000)); // Delay between batches
-  }
-
-  return { successCount, failureCount, failedRecipients };
-}
-
-async function fetchByType(date, type) {
-  try {
-    let query = supabase.from('user');
-    let processedData = [];
-
-    if (type === 'member') {
-      query = query
-        .select('id, name, club, phone, email, role')
-        .eq('type', 'member')
-        .eq('dob', date)
-        .eq('active', true);
-    } else if (type === 'spouse') {
-      query = query
-        .select('id, name, club, phone, email, partner:partner_id (id, name)')
-        .eq('type', 'spouse')
-        .eq('dob', date)
-        .eq('active', true);
-    } else if (type === 'anniversary') {
-      query = query
-        .select('id, name, club, email, phone, role, partner:partner_id (id, name, club, email, phone, active)')
-        .eq('type', 'member')
-        .eq('anniversary', date)
-        .eq('active', true);
-    } else {
-      throw new Error("Invalid type provided");
+    
+        return Response.json({
+          message: 'Email sent successfully',
+          count: birthdayData.length,
+        });
+    
+      } catch (error) {
+        console.error('Send email error:', error);
+        return Response.json(
+          { message: error.message || 'Failed to send email' },
+          { status: 500 }
+        );
+      }
     }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    if (!data || data.length === 0) return [];
-
-    processedData = data;
-
-    if (type === "anniversary") {
-      const uniquePairs = new Set();
-      processedData = data.filter((item) => {
-        // Ensure both member and partner are active
-        if (!item.partner || item.partner.active !== true) return false;
-
-        const pairKey1 = `${item.id}-${item.partner.id}`;
-        const pairKey2 = `${item.partner.id}-${item.id}`;
-        if (uniquePairs.has(pairKey2)) return false;
-
-        uniquePairs.add(pairKey1);
-        return true;
-      });
+    
+    async function fetchByType(date, type) {
+      try {
+        let query = supabase.from('user');
+        let processedData = [];
+    
+        if (type === 'member') {
+          query = query
+            .select('id, name, club, phone, email, role')
+            .eq('type', 'member')
+            .eq('dob', date)
+            .eq('active', true);
+        } else if (type === 'spouse') {
+          query = query
+            .select('id, name, club, phone, email, partner:partner_id (id, name)')
+            .eq('type', 'spouse')
+            .eq('dob', date)
+            .eq('active', true);
+        } else if (type === 'anniversary') {
+          query = query
+            .select('id, name, club, email, phone, role, partner:partner_id (id, name, club, email, phone, active)')
+            .eq('type', 'member')
+            .eq('anniversary', date)
+            .eq('active', true);
+        } else {
+          throw new Error("Invalid type provided");
+        }
+    
+        const { data, error } = await query;
+        if (error) throw error;
+    
+        if (!data || data.length === 0) return [];
+    
+        processedData = data;
+    
+        if (type === "anniversary") {
+          const uniquePairs = new Set();
+          processedData = data.filter((item) => {
+            // Ensure both member and partner are active
+            if (!item.partner || item.partner.active !== true) return false;
+    
+            const pairKey1 = `${item.id}-${item.partner.id}`;
+            const pairKey2 = `${item.partner.id}-${item.id}`;
+            if (uniquePairs.has(pairKey2)) return false;
+    
+            uniquePairs.add(pairKey1);
+            return true;
+          });
+        }
+    
+        return processedData;
+      } catch (err) {
+        console.error("fetchByType error:", err);
+        return [];
+      }
     }
-
-    return processedData;
-  } catch (err) {
-    console.error("fetchByType error:", err);
-    return [];
-  }
-}
-
-function toTitleCase(str) {
-  if (!str || typeof str !== 'string') return '';
-  return str
-    .split(' ')
-    .map(word => {
-      const lower = word.toLowerCase();
-      if (lower === 'pdg') return 'PDG';
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join(' ');
-}
+    
+    function toTitleCase(str) {
+      if (!str || typeof str !== 'string') return '';
+      return str
+        .split(' ')
+        .map(word => {
+          const lower = word.toLowerCase();
+          if (lower === 'pdg') return 'PDG';
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
+        .join(' ');
+    }
