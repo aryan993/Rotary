@@ -211,7 +211,13 @@ export async function POST(request) {
         let html = '';
         for (let i = 0; i < rowsToShow; i++) {
           const field = availableFields[i] || { label: '', value: '' };
-          const displayValue = field.label === 'Email:' ? field.value : toTitleCase(field.value);
+          let displayValue = field.value;
+
+          if (field.label === 'Email:' && field.value) {
+            displayValue = `<a href="mailto:${field.value}" style="color:inherit;text-decoration:underline;">${field.value}</a>`;
+          } else {
+            displayValue = toTitleCase(field.value);
+          }
 
           html += `
         <tr>

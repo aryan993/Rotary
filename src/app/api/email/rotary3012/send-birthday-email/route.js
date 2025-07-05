@@ -3,7 +3,7 @@ import { Storage } from 'megajs';
 import nodemailer from 'nodemailer';
 import { supabase } from "@/app/utils/dbconnect";
 import { formatFullDate } from "@/lib/utils";
-import users from "../../../../utils/users" 
+import users from "../../../../utils/users"
 
 export async function POST(request) {
   try {
@@ -17,43 +17,43 @@ export async function POST(request) {
     const date = `2000-${String(nowIST.getMonth() + 1).padStart(2, '0')}-${String(nowIST.getDate()).padStart(2, '0')}`;
 
     const [birthdayData, spouseBirthdays, anniversaries] = await Promise.all([
-          fetchByType(date, 'member'),
-          fetchByType(date, 'spouse'),
-          fetchByType(date, 'anniversary'),
-        ]);
-    
-        const storage = new Storage({ email: MEGA_EMAIL, password: MEGA_PASSWORD });
-        await new Promise((resolve, reject) => {
-          storage.on('ready', resolve);
-          storage.on('error', reject);
-        });
-    
-        const files = storage.root.children || [];
-        const attachments = [];
-    
-        const congratsFile = files.find(f => f.name === 'try.gif');
-        let congratsCid = '';
-    
-        if (congratsFile) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            congratsFile.download()
-              .on('data', chunk => chunks.push(chunk))
-              .on('end', () => resolve(Buffer.concat(chunks)))
-              .on('error', reject);
-          });
-    
-          congratsCid = 'congratulations-gif';
-          attachments.push({
-            filename: congratsFile.name,
-            content: buffer,
-            cid: congratsCid,
-          });
-        }
-    
-        const today = formatFullDate(date);
-    
-        let htmlTable = `
+      fetchByType(date, 'member'),
+      fetchByType(date, 'spouse'),
+      fetchByType(date, 'anniversary'),
+    ]);
+
+    const storage = new Storage({ email: MEGA_EMAIL, password: MEGA_PASSWORD });
+    await new Promise((resolve, reject) => {
+      storage.on('ready', resolve);
+      storage.on('error', reject);
+    });
+
+    const files = storage.root.children || [];
+    const attachments = [];
+
+    const congratsFile = files.find(f => f.name === 'try.gif');
+    let congratsCid = '';
+
+    if (congratsFile) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        congratsFile.download()
+          .on('data', chunk => chunks.push(chunk))
+          .on('end', () => resolve(Buffer.concat(chunks)))
+          .on('error', reject);
+      });
+
+      congratsCid = 'congratulations-gif';
+      attachments.push({
+        filename: congratsFile.name,
+        content: buffer,
+        cid: congratsCid,
+      });
+    }
+
+    const today = formatFullDate(date);
+
+    let htmlTable = `
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html xmlns="http://www.w3.org/1999/xhtml">
         <head>
@@ -84,11 +84,11 @@ export async function POST(request) {
                       <p style="margin: 0 0 15px 0; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">May your day be filled with joy, good health, and cherished moments of togetherness. This simple gesture is a celebration of the spirit of fellowship that binds us all.</p>
                       <p style="margin: 0 0 30px 0; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">Stay blessed, stay healthy, and keep inspiring!</p>
         `;
-    
-        async function generateCardsSection(title, records, getDetailsFn, isAnniversary = false) {
-          if (!records || records.length === 0) return '';
-    
-          let html = `
+
+    async function generateCardsSection(title, records, getDetailsFn, isAnniversary = false) {
+      if (!records || records.length === 0) return '';
+
+      let html = `
                   <tr>
                     <td style="padding: 10px 0;">
                       <h2 style="font-family: Arial, sans-serif; color: #333; margin: 0 0 15px 0; font-size: 20px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">${title} on ${today}</h2>
@@ -98,37 +98,37 @@ export async function POST(request) {
                             <table width="100%" border="0" cellspacing="15" cellpadding="0">
                               <tr>
           `;
-    
-          // Split into two columns for desktop view
-          let column1 = [];
-          let column2 = [];
-          records.forEach((record, index) => {
-            if (index % 2 === 0) {
-              column1.push(record);
-            } else {
-              column2.push(record);
-            }
-          });
-    
-          html += `<td width="50%" valign="top" style="padding: 0;">`;
-    
-          // Process first column
-          for (const record of column1) {
-            html += await generateCard(record, getDetailsFn, isAnniversary);
-          }
-    
-          html += `</td>`;
-          html += `<td width="50%" valign="top" style="padding: 0;">`;
-    
-          // Process second column
-          for (const record of column2) {
-            html += await generateCard(record, getDetailsFn, isAnniversary);
-          }
-    
-          html += `</td>`;
-          html += `</tr>`;
-    
-          html += `
+
+      // Split into two columns for desktop view
+      let column1 = [];
+      let column2 = [];
+      records.forEach((record, index) => {
+        if (index % 2 === 0) {
+          column1.push(record);
+        } else {
+          column2.push(record);
+        }
+      });
+
+      html += `<td width="50%" valign="top" style="padding: 0;">`;
+
+      // Process first column
+      for (const record of column1) {
+        html += await generateCard(record, getDetailsFn, isAnniversary);
+      }
+
+      html += `</td>`;
+      html += `<td width="50%" valign="top" style="padding: 0;">`;
+
+      // Process second column
+      for (const record of column2) {
+        html += await generateCard(record, getDetailsFn, isAnniversary);
+      }
+
+      html += `</td>`;
+      html += `</tr>`;
+
+      html += `
                             </table>
                           </td>
                         </tr>
@@ -136,95 +136,102 @@ export async function POST(request) {
                     </td>
                   </tr>
           `;
-    
-          return html;
-        }
-    
-        async function generateCard(record, getDetailsFn, isAnniversary = false) {
-          const imageName = `${record.id}.jpg`;
-          const partnerImageName = record?.partner?.id ? `${record.partner.id}.jpg` : null;
-          const defaultImageName = '0.jpg';
-    
-          const file = files.find(f => f.name === imageName) || files.find(f => f.name === defaultImageName);
-          const partnerFile = partnerImageName ? (files.find(f => f.name === partnerImageName) || files.find(f => f.name === defaultImageName)) : null;
-    
-          let mainCid = '';
-          let partnerCid = '';
-    
-          if (file) {
-            const buffer = await new Promise((resolve, reject) => {
-              const chunks = [];
-              file.download()
-                .on('data', chunk => chunks.push(chunk))
-                .on('end', () => resolve(Buffer.concat(chunks)))
-                .on('error', reject);
-            });
-    
-            mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
-            attachments.push({
-              filename: file.name,
-              content: buffer,
-              cid: mainCid,
-            });
-          }
-    
-          if (partnerFile) {
-            const buffer = await new Promise((resolve, reject) => {
-              const chunks = [];
-              partnerFile.download()
-                .on('data', chunk => chunks.push(chunk))
-                .on('end', () => resolve(Buffer.concat(chunks)))
-                .on('error', reject);
-            });
-    
-            partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
-            attachments.push({
-              filename: partnerFile.name,
-              content: buffer,
-              cid: partnerCid,
-            });
-          }
-    
-          const details = getDetailsFn(record);
-    
-          // Improved name display with controlled line breaks
-          const formatNameForDisplay = (name) => {
-            if (!name) return '&nbsp;';
-    
-            // For anniversary cards with partner names
-            if (isAnniversary && name.includes(' & ')) {
-              const [name1, name2] = name.split(' & ');
-              return `
+
+      return html;
+    }
+
+    async function generateCard(record, getDetailsFn, isAnniversary = false) {
+      const imageName = `${record.id}.jpg`;
+      const partnerImageName = record?.partner?.id ? `${record.partner.id}.jpg` : null;
+      const defaultImageName = '0.jpg';
+
+      const file = files.find(f => f.name === imageName) || files.find(f => f.name === defaultImageName);
+      const partnerFile = partnerImageName ? (files.find(f => f.name === partnerImageName) || files.find(f => f.name === defaultImageName)) : null;
+
+      let mainCid = '';
+      let partnerCid = '';
+
+      if (file) {
+        const buffer = await new Promise((resolve, reject) => {
+          const chunks = [];
+          file.download()
+            .on('data', chunk => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
+
+        mainCid = file.name === defaultImageName ? 'default-image' : `image-${record.id}`;
+        attachments.push({
+          filename: file.name,
+          content: buffer,
+          cid: mainCid,
+        });
+      }
+
+      if (partnerFile) {
+        const buffer = await new Promise((resolve, reject) => {
+          const chunks = [];
+          partnerFile.download()
+            .on('data', chunk => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
+
+        partnerCid = partnerFile.name === defaultImageName ? 'default-image' : `image-${record.partner.id}`;
+        attachments.push({
+          filename: partnerFile.name,
+          content: buffer,
+          cid: partnerCid,
+        });
+      }
+
+      const details = getDetailsFn(record);
+
+      // Improved name display with controlled line breaks
+      const formatNameForDisplay = (name) => {
+        if (!name) return '&nbsp;';
+
+        // For anniversary cards with partner names
+        if (isAnniversary && name.includes(' & ')) {
+          const [name1, name2] = name.split(' & ');
+          return `
             <span style="display: inline-block; width: 100%;">${toTitleCase(name1)} &</span>
             <span style="display: inline-block; width: 100%;">${toTitleCase(name2)}</span>
           `;
-            }
-            return toTitleCase(name);
-          };
-    
-          // Always show 5 rows of data with compact layout
-          const renderFields = (fields) => {
-            const availableFields = fields.filter(f => f.value && f.value !== 'NULL');
-            const rowsToShow = 5; // Fixed number of rows
-    
-            let html = '';
-            for (let i = 0; i < rowsToShow; i++) {
-              const field = availableFields[i] || { label: '', value: '' };
-              const displayValue = field.label === 'Email:' ? field.value : toTitleCase(field.value);
-    
-              html += `
+        }
+        return toTitleCase(name);
+      };
+
+      // Always show 5 rows of data with compact layout
+      const renderFields = (fields) => {
+        const availableFields = fields.filter(f => f.value && f.value !== 'NULL');
+        const rowsToShow = 5; // Fixed number of rows
+
+        let html = '';
+        for (let i = 0; i < rowsToShow; i++) {
+          const field = availableFields[i] || { label: '', value: '' };
+          let displayValue = field.value;
+
+          if (field.label === 'Email:' && field.value) {
+            displayValue = `<a href="mailto:${field.value}" style="color:inherit;text-decoration:underline;">${field.value}</a>`;
+          } else {
+            displayValue = toTitleCase(field.value);
+          }
+
+
+          html += `
             <tr>
               <td style="padding: 0; font-size: 14px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; height: 18px; line-height: 1;">
                 <strong>${field.label || '&nbsp;'}</strong>${displayValue || '&nbsp;'}
               </td>
             </tr>
           `;
-            }
-            return html;
-          };
-    
-          // Fixed size card with compact layout
-          let cardHtml = `
+        }
+        return html;
+      };
+
+      // Fixed size card with compact layout
+      let cardHtml = `
         <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 15px; background-color: #c4e6f8; border: 1px solid #a1cbe2; border-radius: 8px; overflow: hidden; height: 160px;">
           <tr>
             <td style="padding: 10px;">
@@ -268,86 +275,86 @@ export async function POST(request) {
           </tr>
         </table>
       `;
-    
-          return cardHtml;
-        }
-        // Generate sections
-        htmlTable += await generateCardsSection("Member's Birthday", birthdayData, (record) => ({
-          name: record.name || '',
-          extraFields: [
-            { label: 'Post:', value: record.role },
-            { label: 'Club:', value: record.club },
-            { label: 'Phone:', value: record.phone },
-            { label: 'Email:', value: record.email },
-          ],
-        }));
-    
-        htmlTable += await generateCardsSection("Partner's Birthday", spouseBirthdays, (record) => ({
-          name: record.name || '',
-          extraFields: [
-            { label: "Partner:", value: record?.partner?.name },
-            { label: 'Club:', value: record?.club },
-            { label: 'Phone:', value: record.phone },
-            { label: 'Email:', value: record.email },
-          ],
-        }));
-    
-        htmlTable += await generateCardsSection('Wedding Anniversary', anniversaries, (record) => ({
-          name: `${record.name} & ${record?.partner?.name}` || '',
-          extraFields: [
-            { label: 'Post:', value: record.role },
-            { label: 'Club:', value: record.club },
-            { label: 'Phone:', value: record.phone },
-            { label: 'Email:', value: record.email },
-          ],
-        }), true);
-    
-        // Footer with left-aligned logos (009, 006, 008) and centered TBAM section
-        const logo006 = files.find(f => f.name === '006.jpg');
-        let logo006Cid = '';
-        if (logo006) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            logo006.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
-          });
-          logo006Cid = 'logo-006';
-          attachments.push({ filename: logo006.name, content: buffer, cid: logo006Cid });
-        }
-    
-        const logo007 = files.find(f => f.name === '007.jpg');
-        let logo007Cid = '';
-        if (logo007) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            logo007.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
-          });
-          logo007Cid = 'logo-007';
-          attachments.push({ filename: logo007.name, content: buffer, cid: logo007Cid });
-        }
-    
-        const logo008 = files.find(f => f.name === '008.jpg');
-        let logo008Cid = '';
-        if (logo008) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            logo008.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
-          });
-          logo008Cid = 'logo-008';
-          attachments.push({ filename: logo008.name, content: buffer, cid: logo008Cid });
-        }
-    
-        const logo009 = files.find(f => f.name === '009.jpg');
-        let logo009Cid = '';
-        if (logo009) {
-          const buffer = await new Promise((resolve, reject) => {
-            const chunks = [];
-            logo009.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
-          });
-          logo009Cid = 'logo-009';
-          attachments.push({ filename: logo009.name, content: buffer, cid: logo009Cid });
-        }
-    
-        htmlTable += `
+
+      return cardHtml;
+    }
+    // Generate sections
+    htmlTable += await generateCardsSection("Member's Birthday", birthdayData, (record) => ({
+      name: record.name || '',
+      extraFields: [
+        { label: 'Post:', value: record.role },
+        { label: 'Club:', value: record.club },
+        { label: 'Phone:', value: record.phone },
+        { label: 'Email:', value: record.email },
+      ],
+    }));
+
+    htmlTable += await generateCardsSection("Partner's Birthday", spouseBirthdays, (record) => ({
+      name: record.name || '',
+      extraFields: [
+        { label: "Partner:", value: record?.partner?.name },
+        { label: 'Club:', value: record?.club },
+        { label: 'Phone:', value: record.phone },
+        { label: 'Email:', value: record.email },
+      ],
+    }));
+
+    htmlTable += await generateCardsSection('Wedding Anniversary', anniversaries, (record) => ({
+      name: `${record.name} & ${record?.partner?.name}` || '',
+      extraFields: [
+        { label: 'Post:', value: record.role },
+        { label: 'Club:', value: record.club },
+        { label: 'Phone:', value: record.phone },
+        { label: 'Email:', value: record.email },
+      ],
+    }), true);
+
+    // Footer with left-aligned logos (009, 006, 008) and centered TBAM section
+    const logo006 = files.find(f => f.name === '006.jpg');
+    let logo006Cid = '';
+    if (logo006) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        logo006.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
+      });
+      logo006Cid = 'logo-006';
+      attachments.push({ filename: logo006.name, content: buffer, cid: logo006Cid });
+    }
+
+    const logo007 = files.find(f => f.name === '007.jpg');
+    let logo007Cid = '';
+    if (logo007) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        logo007.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
+      });
+      logo007Cid = 'logo-007';
+      attachments.push({ filename: logo007.name, content: buffer, cid: logo007Cid });
+    }
+
+    const logo008 = files.find(f => f.name === '008.jpg');
+    let logo008Cid = '';
+    if (logo008) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        logo008.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
+      });
+      logo008Cid = 'logo-008';
+      attachments.push({ filename: logo008.name, content: buffer, cid: logo008Cid });
+    }
+
+    const logo009 = files.find(f => f.name === '009.jpg');
+    let logo009Cid = '';
+    if (logo009) {
+      const buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        logo009.download().on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
+      });
+      logo009Cid = 'logo-009';
+      attachments.push({ filename: logo009.name, content: buffer, cid: logo009Cid });
+    }
+
+    htmlTable += `
                   <tr>
                     <td style="padding: 20px 0;">
                       <table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -427,7 +434,7 @@ export async function POST(request) {
         </body>
         </html>
         `;
-    
+
     // ✅ Setup email transporter
     const transporter = nodemailer.createTransport({
       host: 'smtp.elasticemail.com',
