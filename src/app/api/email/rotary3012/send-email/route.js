@@ -484,36 +484,29 @@ export async function POST(request) {
     </html>
     `;
 
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.elasticemail.com',
-            port: 587,
-            secure: false,
-            auth: { user: SMTP_USER, pass: ELASTIC_KEY },
-        });
+ // ✅ Setup email transporter
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.elasticemail.com',
+      port: 587,
+      secure: false,
+      auth: { user: SMTP_USER, pass: ELASTIC_KEY }
+    });
 
+    // ✅ Send in batches with tracking
+    const { successCount, failureCount, failedRecipients } = await sendInBatches(email_list, 50, {
+      transporter,
+      html: htmlTable,
+      attachments,
+      EMAIL_FROM,
+      today
+    });
 
-        for (const recipient of email_list) {
-            await transporter.sendMail({
-                from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
-                to: recipient,
-                replyTo: 'amitadg2526rid3012@gmail.com',
-                subject: `${email_subject}`,
-                html: htmlTable,
-                attachments,
-                headers: {
-                    'X-ElasticEmail-Settings': JSON.stringify({
-                        UnsubscribeLinkText: '',
-                        UnsubscribeLinkType: 'None'
-                    })
-                }
-            });
-            console.log("email sent to " + recipient);
-        }
-
-        return Response.json({
-            message: 'Email sent successfully',
-            count: email_list.length,
-        });
+    return Response.json({
+      message: 'Emails processed',
+      successCount,
+      failureCount,
+      failedRecipients
+    });
 
     } catch (error) {
         console.error('Send email error:', error);
@@ -522,6 +515,49 @@ export async function POST(request) {
             { status: 500 }
         );
     }
+}
+
+async function sendInBatches(recipients, batchSize, { transporter, html, attachments, EMAIL_FROM, today }) {
+  let successCount = 0;
+  let failureCount = 0;
+  const failedRecipients = [];
+
+  for (let i = 0; i < recipients.length; i += batchSize) {
+    const batch = recipients.slice(i, i + batchSize);
+
+    const promises = batch.map(recipient =>
+      transporter.sendMail({
+        from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
+        to: recipient,
+        replyTo: 'amitadg2526rid3012@gmail.com',
+        subject: `Birthday and Anniversary Notification ${today}`,
+        html,
+        attachments,
+        headers: {
+          'X-ElasticEmail-Settings': JSON.stringify({
+            UnsubscribeLinkText: '',
+            UnsubscribeLinkType: 'None',
+            Channels: 'birthday-email',
+            IsTransactional: true,
+            TrackOpens: true,
+            TrackClicks: true
+          })
+        }
+      }).then(() => {
+        console.log("✅ Sent to", recipient);
+        successCount++;
+      }).catch(err => {
+        console.error("❌ Failed to send to", recipient, err.message);
+        failureCount++;
+        failedRecipients.push({ email: recipient, error: err.message });
+      })
+    );
+
+    await Promise.all(promises);
+    await new Promise(r => setTimeout(r, 1000)); // Delay between batches
+  }
+
+  return { successCount, failureCount, failedRecipients };
 }
 
 async function fetchByType(date, type) {
