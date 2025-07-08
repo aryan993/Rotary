@@ -12,9 +12,9 @@ function Navbar() {
     const selected = e.target.value;
     setSelectedValue(''); // Reset to allow re-selection
     if (selected === 'rotary3012') {
-      router.push('/dashboard/emailsend/rotary3012');
+      router.push('/dashboard/services/emailsend/rotary3012');
     } else if (selected === 'tbam') {
-      router.push('/dashboard/emailsend/dheerajbhargava');
+      router.push('/dashboard/services/emailsend/dheerajbhargava');
     }
   };
 
@@ -29,7 +29,7 @@ function Navbar() {
             </Link>
           </li>
           <li>
-            <Link href="/dashboard/newUser">
+            <Link href="/dashboard/user/newUser">
               <span className="hover:text-gray-200 cursor-pointer">Add a user</span>
             </Link>
           </li>
@@ -45,27 +45,27 @@ function Navbar() {
             </select>
           </li>
           <li>
-            <Link href="/dashboard/personalemails">
+            <Link href="/dashboard/services/personalemails">
               <span className="hover:text-gray-200 cursor-pointer">Personal Emails</span>
             </Link>
           </li>
           <li>
-            <Link href="/dashboard/whatsapp">
+            <Link href="/dashboard/services/whatsapp">
               <span className="hover:text-gray-200 cursor-pointer">Whatsapp</span>
             </Link>
           </li>
           <li>
-            <Link href="/dashboard/member">
+            <Link href="/dashboard/user/member">
               <span className="hover:text-gray-200 cursor-pointer">Member</span>
             </Link>
           </li>
           <li>
-            <Link href="/dashboard/spouse">
+            <Link href="/dashboard/user/spouse">
               <span className="hover:text-gray-200 cursor-pointer">Spouse</span>
             </Link>
           </li>
           <li>
-            <Link href="/dashboard/anniversary">
+            <Link href="/dashboard/user/anniversary">
               <span className="hover:text-gray-200 cursor-pointer">Anniversary</span>
             </Link>
           </li>

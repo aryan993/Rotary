@@ -7,8 +7,8 @@ import {
   getCurrentDate,
   getNextMonthDate,
   formatMonthDay
-} from "../../../lib/utils";
-import UserDetailModal from "../../components/UserDetailModal";
+} from "../../../../lib/utils";
+import UserDetailModal from "../../../components/UserDetailModal";
 
 export default function User() {
   const BIRTHDAY_FILTER = "anniversary";
