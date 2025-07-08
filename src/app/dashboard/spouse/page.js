@@ -25,7 +25,7 @@ export default function User() {
   const [filterColumn, setFilterColumn] = useState("name");
   const [filterValue, setFilterValue] = useState("");
 
-  const fetchData = useCallback(async () => {
+  const fetchdata = useCallback(async () => {
     try {
       const response = await fetch(
         `/api/users?filterType=${BIRTHDAY_FILTER}&startDate=${fromDate}&endDate=${toDate}&type=${type}`
@@ -38,8 +38,8 @@ export default function User() {
   }, [fromDate, toDate]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchdata();
+  }, [fetchdata]);
 
   useEffect(() => {
     if (!Array.isArray(data)) {
@@ -120,7 +120,7 @@ export default function User() {
         />
         <button
           type="button"
-          onClick={fetchData}
+          onClick={fetchdata}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Fetch
