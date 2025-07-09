@@ -55,7 +55,7 @@ export async function POST(request) {
 
       const imageName =
         user.type === 'anniversary'
-          ? user.annposer?`${user.id}_anniv.jpg`:`${user.partner.id}_anniv.jpg`
+          ? user.annposter?`${user.id}_anniv.jpg`:`${user.partner.id}_anniv.jpg`
           : `${user.id}_poster.jpg`;
 
       const file = files.find(f => f.name === imageName);
