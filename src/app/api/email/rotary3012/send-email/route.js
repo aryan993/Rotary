@@ -622,6 +622,7 @@ function toTitleCase(str) {
         .map(word => {
             const lower = word.toLowerCase();
             if (lower === 'pdg') return 'PDG';
+            if (lower === 'ca') return 'CA';
             return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
         })
         .join(' ');
