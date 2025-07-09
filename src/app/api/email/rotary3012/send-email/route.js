@@ -530,7 +530,7 @@ async function sendInBatches(recipients, batchSize, { transporter, html, attachm
       transporter.sendMail({
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
         to: recipient,
-        replyTo: 'amitadg2526rid3012@gmail.com',
+        replyTo: 'amitadg2526rid3012@gmail.com, anilkmohindru@gmail.com',
         subject: email_subject,
         html,
         attachments,
