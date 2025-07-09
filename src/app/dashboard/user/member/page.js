@@ -1,8 +1,6 @@
 "use client";
 
-//apis we call are upload,download,users
-
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -13,8 +11,8 @@ import {
 import UserDetailModal from "../../../components/UserDetailModal";
 
 export default function User() {
-  const BIRTHDAY_FILTER = 'birthday';
-  const type = 'member';
+  const BIRTHDAY_FILTER = "birthday";
+  const type = "member";
   const ITEMS_PER_PAGE = 10;
 
   const [data, setData] = useState([]);
@@ -55,12 +53,8 @@ export default function User() {
     setCurrentPage(1);
   }, [data, filterColumn, filterValue]);
 
-
   const handleRowClick = (e, id) => {
-    if (
-      e.target.tagName !== "BUTTON" &&
-      !e.target.closest("button")
-    ) {
+    if (e.target.tagName !== "BUTTON" && !e.target.closest("button")) {
       setModalId(id);
     }
   };
@@ -83,61 +77,55 @@ export default function User() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6 flex flex-wrap items-center gap-4">
-        <label className="flex items-center gap-2">
-          From:
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">From</label>
           <DatePicker
             selected={new Date(`2000-${fromDate.slice(5)}`)}
             onChange={(date) => handleDateChange(setFromDate, date)}
             dateFormat="MMM dd"
             showMonthDropdown
             showDayMonthPicker
-            className="p-2 border border-gray-300 rounded-md"
+            className="p-2 border border-gray-300 rounded-md w-full"
           />
-        </label>
-        <label className="flex items-center gap-2">
-          To:
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">To</label>
           <DatePicker
             selected={new Date(`2000-${toDate.slice(5)}`)}
             onChange={(date) => handleDateChange(setToDate, date)}
             dateFormat="MMM dd"
             showMonthDropdown
             showDayMonthPicker
-            className="p-2 border border-gray-300 rounded-md"
+            className="p-2 border border-gray-300 rounded-md w-full"
           />
-        </label>
-        <label className="flex items-center gap-2">
-          Filter:
-          <select
-            value={filterColumn}
-            onChange={(e) => setFilterColumn(e.target.value)}
-            className="p-2 border rounded-md"
-          >
-            <option value="name">Name</option>
-            <option value="email">Email</option>
-            <option value="phone">Phone</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Enter value"
-            value={filterValue}
-            onChange={(e) => setFilterValue(e.target.value)}
-            className="p-2 border border-gray-300 rounded-md"
-          />
-        </label>
-        <button
-          type="button"
-          onClick={fetchdata}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Fetch
-        </button>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700">Filter</label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={filterColumn}
+              onChange={(e) => setFilterColumn(e.target.value)}
+              className="p-2 border rounded-md w-full"
+            >
+              <option value="name">Name</option>
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Enter value"
+              value={filterValue}
+              onChange={(e) => setFilterValue(e.target.value)}
+              className="p-2 border border-gray-300 rounded-md w-full"
+            />
+          </div>
+        </div>
       </div>
 
-
       <div className="overflow-x-auto border border-gray-300 rounded-lg">
-        <table className="min-w-full table-auto text-sm text-left border-collapse">
+        <table className="min-w-full table-auto text-sm text-left">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="border px-4 py-2">Member</th>
@@ -145,7 +133,7 @@ export default function User() {
               <th className="border px-4 py-2">Phone</th>
               <th className="border px-4 py-2">Birthday</th>
               <th className="border px-4 py-2">Profile</th>
-              <th className="border px-4 py-2">Poster </th>
+              <th className="border px-4 py-2">Poster</th>
             </tr>
           </thead>
           <tbody>
@@ -168,31 +156,30 @@ export default function User() {
                   <td className="border px-4 py-2">{formatMonthDay(row.dob)}</td>
                   <td className="border px-4 py-2">
                     <button
-                      className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
-              ${row.profile ? 'bg-green-600' : 'bg-red-600'}`}
+                      className={`px-3 py-1 text-xs rounded-md font-medium text-white transition 
+                        ${row.profile ? "bg-green-600" : "bg-red-600"}`}
                     >
-                      {row.profile ? 'Uploaded' : 'Missing'}
+                      {row.profile ? "Uploaded" : "Missing"}
                     </button>
                   </td>
                   <td className="border px-4 py-2">
                     <button
-                      className={`px-4 py-2 rounded-md font-semibold text-white hover:opacity-90 
-              ${row.poster ? 'bg-green-600' : 'bg-red-600'}`}
+                      className={`px-3 py-1 text-xs rounded-md font-medium text-white transition 
+                        ${row.poster ? "bg-green-600" : "bg-red-600"}`}
                     >
-                      {row.poster ? 'Uploaded' : 'Missing'}
+                      {row.poster ? "Uploaded" : "Missing"}
                     </button>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
-
         </table>
       </div>
 
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
         <button
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50"
           onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
           disabled={currentPage === 1}
         >
@@ -202,7 +189,7 @@ export default function User() {
           Page {currentPage} of {totalPages}
         </span>
         <button
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50"
           onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
           disabled={currentPage === totalPages}
         >
@@ -215,11 +202,10 @@ export default function User() {
           id={modalId}
           onClose={() => {
             setModalId(null);
-            fetchdata();  // Refresh page on modal close
+            fetchdata(); // Refresh on close
           }}
         />
       )}
-
     </div>
   );
 }

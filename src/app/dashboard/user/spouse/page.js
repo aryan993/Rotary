@@ -1,24 +1,20 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-  getCurrentDate,
-  getNextMonthDate,
-  formatMonthDay
-} from "../../../../lib/utils";
+import { getCurrentDate, getNextMonthDate, formatMonthDay } from "../../../../lib/utils";
 import UserDetailModal from "../../../components/UserDetailModal";
 
 export default function User() {
-  const BIRTHDAY_FILTER = 'birthday';
-  const type = 'spouse';
+  const BIRTHDAY_FILTER = "birthday";
+  const type = "spouse";
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('');
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
   const [fromDate, setFromDate] = useState(getCurrentDate());
   const [toDate, setToDate] = useState(getNextMonthDate());
   const [modalId, setModalId] = useState(null);
@@ -69,10 +65,10 @@ export default function User() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6 flex flex-wrap items-center gap-4">
-        <label className="flex items-center gap-2">
-          From:
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">From</label>
           <DatePicker
             selected={new Date(`2000-${fromDate.slice(5)}`)}
             onChange={(date) => {
@@ -84,11 +80,11 @@ export default function User() {
             dateFormat="MMM dd"
             showMonthDropdown
             showDayMonthPicker
-            className="p-2 border border-gray-300 rounded-md"
+            className="p-2 border border-gray-300 rounded-md w-full"
           />
-        </label>
-        <label className="flex items-center gap-2">
-          To:
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">To</label>
           <DatePicker
             selected={new Date(`2000-${toDate.slice(5)}`)}
             onChange={(date) => {
@@ -99,45 +95,46 @@ export default function User() {
             dateFormat="MMM dd"
             showMonthDropdown
             showDayMonthPicker
-            className="p-2 border border-gray-300 rounded-md"
+            className="p-2 border border-gray-300 rounded-md w-full"
           />
-        </label>
-        <select
-          className="p-2 border rounded-md"
-          value={filterColumn}
-          onChange={(e) => setFilterColumn(e.target.value)}
-        >
-          <option value="name">Spouse</option>
-          <option value="email">Email</option>
-          <option value="phone">Phone</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Filter value"
-          className="p-2 border rounded-md"
-          value={filterValue}
-          onChange={(e) => setFilterValue(e.target.value)}
-        />
-        <button
-          type="button"
-          onClick={fetchdata}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Fetch
-        </button>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700">Filter</label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              className="p-2 border rounded-md w-full"
+              value={filterColumn}
+              onChange={(e) => setFilterColumn(e.target.value)}
+            >
+              <option value="name">Spouse</option>
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Filter value"
+              className="p-2 border rounded-md w-full"
+              value={filterValue}
+              onChange={(e) => setFilterValue(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       {message && (
-        <div className={`mb-4 px-4 py-2 rounded ${messageType === 'success'
-          ? 'bg-green-100 text-green-700'
-          : 'bg-red-100 text-red-700'
-          }`}>
+        <div
+          className={`mb-4 px-4 py-2 rounded ${
+            messageType === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
           {message}
         </div>
       )}
 
       <div className="overflow-x-auto border border-gray-300 rounded-lg">
-        <table className="min-w-full table-auto text-sm text-left border-collapse">
+        <table className="min-w-full table-auto text-sm text-left">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="border px-4 py-2">Spouse</th>
@@ -154,7 +151,9 @@ export default function User() {
               <tr
                 key={row.id}
                 onClick={(e) => handleRowClick(e, row.id)}
-                className={`cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
+                className={`cursor-pointer ${
+                  idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                } hover:bg-gray-100`}
               >
                 <td className="border px-4 py-2">{row.name}</td>
                 <td className="border px-4 py-2">{row.email}</td>
@@ -163,27 +162,20 @@ export default function User() {
                 <td className="border px-4 py-2">{row?.partner?.name}</td>
                 <td className="border px-4 py-2">
                   <button
-                    className={`px-4 py-2 rounded-md font-semibold text-white transition-all duration-200
-                      ${row.profile ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+                    className={`px-3 py-1 text-xs rounded-md font-medium text-white transition 
+                      ${row.profile ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
                     `}
-                  >{row.profile ? 'Uploaded' : 'Missing'}
+                  >
+                    {row.profile ? "Uploaded" : "Missing"}
                   </button>
                 </td>
                 <td className="border px-4 py-2">
                   <button
-                    onClick={() =>
-                      handleDownload(
-                        `${row.id}.jpg`,
-                        setMessage,
-                        setMessageType,
-                        setIsLoading
-                      )
-                    }
-                    className={`px-4 py-2 rounded-md font-semibold text-white transition-all duration-200
-                      ${row.poster ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+                    className={`px-3 py-1 text-xs rounded-md font-medium text-white transition 
+                      ${row.poster ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
                     `}
                   >
-                    {row.poster ? 'Uploaded' : 'Missing'}
+                    {row.poster ? "Uploaded" : "Missing"}
                   </button>
                 </td>
               </tr>
@@ -192,18 +184,20 @@ export default function User() {
         </table>
       </div>
 
-      <div className="mt-4 flex justify-center gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
         <button
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50"
           disabled={currentPage === 1}
         >
           Prev
         </button>
-        <span className="px-3 py-1">{currentPage} / {totalPages || 1}</span>
+        <span className="text-sm text-gray-700">
+          Page {currentPage} of {totalPages || 1}
+        </span>
         <button
           onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50"
           disabled={currentPage === totalPages}
         >
           Next
@@ -215,7 +209,7 @@ export default function User() {
           id={modalId}
           onClose={() => {
             setModalId(null);
-            fetchdata();  // Refresh page on modal close
+            fetchdata();
           }}
         />
       )}
