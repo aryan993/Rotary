@@ -55,7 +55,7 @@ export async function POST(request) {
 
       const imageName =
         user.type === 'anniversary'
-          ? `${user.id}_anniv.jpg`
+          ? user.annposer?`${user.id}_anniv.jpg`:`${user.partner.id}_anniv.jpg`
           : `${user.id}_poster.jpg`;
 
       const file = files.find(f => f.name === imageName);
@@ -175,8 +175,7 @@ async function fetchByType(date, type) {
         .eq('active', true);
     } else if (type === 'anniversary') {
       query = query
-        .select('id, name, club, email, phone, role, partner:partner_id (id, name, club, email, phone, active)')
-        .eq('type', 'member')
+        .select('id, name, club, email, phone, role,annposter, partner:partner_id (id, name, club, email, phone, active,annposter)')
         .eq('anniversary', date)
         .eq('active', true);
     } else {
@@ -191,16 +190,9 @@ async function fetchByType(date, type) {
     processedData = data;
 
     if (type === "anniversary") {
-      const uniquePairs = new Set();
       processedData = data.filter((item) => {
         // Ensure both member and partner are active
         if (!item.partner || item.partner.active !== true) return false;
-
-        const pairKey1 = `${item.id}-${item.partner.id}`;
-        const pairKey2 = `${item.partner.id}-${item.id}`;
-        if (uniquePairs.has(pairKey2)) return false;
-
-        uniquePairs.add(pairKey1);
         return true;
       });
     }
