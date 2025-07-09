@@ -498,7 +498,8 @@ export async function POST(request) {
       html: htmlTable,
       attachments,
       EMAIL_FROM,
-      today
+      today,
+      email_subject
     });
 
     return Response.json({
@@ -517,7 +518,7 @@ export async function POST(request) {
     }
 }
 
-async function sendInBatches(recipients, batchSize, { transporter, html, attachments, EMAIL_FROM, today }) {
+async function sendInBatches(recipients, batchSize, { transporter, html, attachments, EMAIL_FROM, today ,email_subject }) {
   let successCount = 0;
   let failureCount = 0;
   const failedRecipients = [];
@@ -530,7 +531,7 @@ async function sendInBatches(recipients, batchSize, { transporter, html, attachm
         from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
         to: recipient,
         replyTo: 'amitadg2526rid3012@gmail.com',
-        subject: `Birthday and Anniversary Notification ${today}`,
+        subject: email_subject,
         html,
         attachments,
         headers: {
