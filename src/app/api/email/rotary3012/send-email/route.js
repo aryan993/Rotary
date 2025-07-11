@@ -63,7 +63,6 @@ export async function POST(request) {
 
         console.log(`Email Date: ${email_date}`);
         console.log(`Email Subject: ${email_subject}`);
-        console.log(`Email List: ${email_list.join(', ')}`);
         console.log(`Email Count: ${email_list.length}`);
 
         const [birthdayData, spouseBirthdays, anniversaries] = await Promise.all([
