@@ -110,7 +110,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const contentType = request.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
+    if (!contentType?.includes("application/json")) {
       return NextResponse.json({ error: "Content-Type must be application/json" }, { status: 400 });
     }
 
@@ -121,6 +121,50 @@ export async function POST(request) {
       return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
     }
 
+    // Fetch existing data for comparison
+    const { data: existingUser, error: fetchUserError } = await supabase
+      .from("user")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchUserError || !existingUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    let existingPartner = null;
+    if (partner?.id) {
+      const { data, error } = await supabase
+        .from("user")
+        .select("*")
+        .eq("id", partner.id)
+        .single();
+      existingPartner = data || null;
+    }
+
+    // Compare and collect changes
+    const changeLogMap = {};
+
+    const addChange = (uid, path, oldVal, newVal) => {
+      if (!changeLogMap[uid]) changeLogMap[uid] = [];
+      changeLogMap[uid].push({ path, old_value: oldVal?.toString() || null, new_value: newVal?.toString() || null });
+    };
+
+    for (const key in updateData) {
+      if (updateData[key] !== existingUser[key]) {
+        addChange(id, `user.${key}`, existingUser[key], updateData[key]);
+      }
+    }
+
+    if (partner?.id && existingPartner) {
+      for (const key in partner) {
+        if (key !== "id" && partner[key] !== existingPartner[key]) {
+          addChange(partner.id, `partner.${key}`, existingPartner[key], partner[key]);
+        }
+      }
+    }
+
+    // Perform updates
     const userUpdate = supabase.from("user").update(updateData).eq("id", id);
     const updates = [userUpdate];
 
@@ -134,8 +178,22 @@ export async function POST(request) {
     const errors = results.map(r => r.error).filter(Boolean);
 
     if (errors.length > 0) {
-      console.error("User update error(s):", errors);
-      return NextResponse.json({ error: "Failed to update user/partner", details: errors }, { status: 500 });
+      console.error("Update error(s):", errors);
+      return NextResponse.json({ error: "Failed to update user or partner", details: errors }, { status: 500 });
+    }
+
+    // Insert logs
+    const logs = Object.entries(changeLogMap).map(([uid, changes]) => ({
+      user_id: uid,
+      changes,
+    }));
+
+    if (logs.length > 0) {
+      const { error: logError } = await supabase.from("change_log").insert(logs);
+      if (logError) {
+        console.error("Failed to log changes:", logError);
+        // Don't block response
+      }
     }
 
     return NextResponse.json({ success: true, message: "User and partner updated" });
