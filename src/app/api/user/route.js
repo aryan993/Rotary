@@ -197,6 +197,32 @@ export async function POST(req) {
       }
     }
 
+    // Log user creation
+    const logUser = async (userId, data) => {
+      const logData = {
+        user_id: userId,
+        action: "create",
+        changes: {
+          name: data.name,
+          role: data.role,
+          email: data.email,
+          phone: data.phone,
+          dob: data.dob,
+          type: data.type,
+          club: data.club,
+          anniversary: anniversary || null,
+          active: true
+        }
+      };
+      const { error } = await supabase.from("change_log").insert(logData);
+      if (error) console.error("Failed to log user creation:", error);
+    };
+
+    await Promise.all([
+      logUser(person1Data.id, person1Data),
+      logUser(person2Data.id, person2Data),
+    ]);
+
     return new Response(
       JSON.stringify({
         message: "Data submitted successfully",

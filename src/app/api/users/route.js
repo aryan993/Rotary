@@ -185,6 +185,7 @@ export async function POST(request) {
     // Insert logs
     const logs = Object.entries(changeLogMap).map(([uid, changes]) => ({
       user_id: uid,
+      action: "update",
       changes,
     }));
 
