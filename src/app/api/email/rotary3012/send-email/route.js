@@ -1,14 +1,10 @@
-// server.js (Express App)
-import express from 'express';
-import nodemailer from 'nodemailer';
-
-const app = express();
-
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-app.get('/send-emails', async (req, res) => {
+export async function POST(request) {
   try {
     const { SMTP_USER, ELASTIC_KEY, EMAIL_FROM } = process.env;
+
+    if (!SMTP_USER || !ELASTIC_KEY || !EMAIL_FROM) {
+      return Response.json({ message: 'Server configuration error' }, { status: 500 });
+    }
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.elasticemail.com',
@@ -17,25 +13,39 @@ app.get('/send-emails', async (req, res) => {
       auth: { user: SMTP_USER, pass: ELASTIC_KEY },
     });
 
+    // Function to wait for given milliseconds
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
     for (let count = 0; count <= 80; count++) {
-      const html = `<p>This is email number <strong>${count}</strong></p>`;
+      const subject = `Count: ${count}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <p>Hello Aryan,</p>
+          <p>This is test email number <strong>${count}</strong>.</p>
+        </div>
+      `;
 
       await transporter.sendMail({
-        from: EMAIL_FROM,
+        from: `"DG Dr. Amita Mohindru" <${EMAIL_FROM}>`,
         to: 'bansalaryan2000@gmail.com',
-        subject: `Count: ${count}`,
+        subject,
         html,
+        replyTo: 'amitadg2526rid3012@gmail.com',
+        headers: {
+          'X-ElasticEmail-Settings': JSON.stringify({
+            UnsubscribeLinkText: '',
+            UnsubscribeLinkType: 'None'
+          })
+        }
       });
 
-      console.log(`Email ${count} sent.`);
-      await delay(15000);
+      console.log(`Sent email ${count} to bansalaryan2000@gmail.com`);
+      await delay(15000); // Wait for 15 seconds before sending the next one
     }
 
-    res.json({ message: 'All emails sent' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    return Response.json({ message: 'All emails sent' });
+  } catch (error) {
+    console.error('Send email error:', error);
+    return Response.json({ message: error.message || 'Failed to send email' }, { status: 500 });
   }
-});
-
-app.listen(3000, () => console.log("Server running on port 3000"));
+}
