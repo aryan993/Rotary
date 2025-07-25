@@ -1,3 +1,11 @@
+// app/api/send-birthday-email/route.js
+// app/api/send-birthday-email/route.js
+import { Storage } from 'megajs';
+import nodemailer from 'nodemailer';
+import { supabase } from "@/app/utils/dbconnect";
+import sharp from 'sharp';
+
+
 export async function POST(request) {
   try {
     const { SMTP_USER, ELASTIC_KEY, EMAIL_FROM } = process.env;
