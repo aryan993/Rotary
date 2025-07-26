@@ -1,7 +1,17 @@
 // src/app/api/poster/delete/route.js
 import { NextResponse } from "next/server";
-import { Storage } from "megajs";
 import { supabase } from "@/app/utils/dbconnect";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+
+// R2 Client
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
 
 export async function POST(req) {
   try {
@@ -17,17 +27,16 @@ export async function POST(req) {
       ? `${id}_anniv.jpg` 
       : `${id}_poster.jpg`;
 
-    // Connect to MEGA storage
-    const storage = await new Storage({
-      email: process.env.MEGA_EMAIL,
-      password: process.env.MEGA_PASSWORD,
-    }).ready;
-
-    // Find and delete the file
-    const file = storage.root.children.find(child => child.name === filename);
-    if (file) {
-      await file.delete(true);
-    }
+   // Attempt to delete from R2
+       try {
+         await s3.send(new DeleteObjectCommand({
+           Bucket: process.env.R2_BUCKET,
+           Key: filename,
+         }));
+       } catch (deleteError) {
+         console.error("R2 delete error:", deleteError);
+         // Don't throw yet — continue to update DB even if file is missing
+       }
 
     // Update Supabase - determine which field to update based on category
     const updateField = category === 'anniversary' ? 'annposter' : 'poster';

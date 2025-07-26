@@ -1,86 +1,74 @@
 // src/app/api/poster/download/route.js
-import { Storage } from 'megajs'
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
+import { Buffer } from 'buffer'
+
+// Utility: stream to buffer
+async function streamToBuffer(stream) {
+  const chunks = []
+  for await (const chunk of stream) {
+    chunks.push(chunk)
+  }
+  return Buffer.concat(chunks)
+}
+
+// R2 S3-compatible client
+const s3 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+})
+
 
 export async function POST(req) {
   try {
-    const { MEGA_EMAIL, MEGA_PASSWORD } = process.env
+    const { fileName, category } = await req.json();
 
-    if (!MEGA_EMAIL || !MEGA_PASSWORD) {
-      return NextResponse.json(
-        { message: 'Server configuration error' },
-        { status: 500 }
-      )
-    }
-
-    const { fileName, category } = await req.json()
-    
     if (!fileName) {
       return NextResponse.json(
         { message: 'File name is required' },
         { status: 400 }
-      )
+      );
     }
 
-    // Determine the correct filename based on category
-    let finalFileName = fileName
+    // Construct key based on category
+    let key = fileName;
     if (category === 'anniversary') {
-      finalFileName += '_anniv.jpg'
+      key += '_anniv.jpg';
     } else {
-      finalFileName += '_poster.jpg'
+      key += '_poster.jpg';
     }
 
-    // Authenticate with MEGA
-    const storage = new Storage({
-      email: MEGA_EMAIL,
-      password: MEGA_PASSWORD,
-    })
+    // Attempt to fetch the object from R2
+    const result = await s3.send(new GetObjectCommand({
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+    }))
 
-    await new Promise((resolve, reject) => {
-      storage.on('ready', resolve)
-      storage.on('error', reject)
-    })
-
-    const files = storage.root.children || []
-    const file = files.find(f => f.name === finalFileName)
-
-    if (!file) {
-      return NextResponse.json(
-        { message: 'File not found' },
-        { status: 404 }
-      )
-    }
-
-    const buffer = await new Promise((resolve, reject) => {
-      const chunks = []
-      file.download()
-        .on('data', chunk => chunks.push(chunk))
-        .on('end', () => resolve(Buffer.concat(chunks)))
-        .on('error', reject)
-    })
-
-    const mimeType = file.attributes?.mime || 'image/jpeg'
+    const buffer = await streamToBuffer(result.Body)
     const base64 = buffer.toString('base64')
+    const mimeType = result.ContentType || 'image/jpeg'
     const downloadUrl = `data:${mimeType};base64,${base64}`
 
     return NextResponse.json({
       downloadUrl,
-      fileName: file.name,
-      message: 'File ready for download'
+      fileName: key,
+      message: 'File ready for download',
     })
 
   } catch (error) {
-    console.error('MEGA download error:', error)
+    console.error('R2 download error:', error)
+    const status = error.Code === 'NoSuchKey' ? 404 : 500
     return NextResponse.json(
-      { message: error.message || 'Failed to download file from MEGA' },
-      { status: 500 }
+      { message: error.message || 'Failed to download file from R2' },
+      { status }
     )
   }
 }
 
 export async function GET() {
-  return NextResponse.json(
-    { message: 'Method not allowed' },
-    { status: 405 }
-  )
+  return NextResponse.json({ message: 'Method not allowed' }, { status: 405 })
 }

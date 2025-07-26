@@ -1,5 +1,26 @@
-import { Storage } from 'megajs';
 import { supabase } from '@/app/utils/dbconnect';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { Buffer } from 'buffer';
+
+// Utility to convert stream to buffer
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+// Initialize R2 client
+const s3 = new S3Client({
+  region: 'auto',
+  endpoint: process.env.R2_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -34,33 +55,31 @@ export async function GET(req) {
       return new Response("Image not available", { status: 404 });
     }
 
-    // If Supabase says the image exists, proceed with MEGA fetch
-    const storage = await new Storage({
-      email: process.env.MEGA_EMAIL,
-      password: process.env.MEGA_PASSWORD,
-    }).ready;
+      try {
+      const result = await s3.send(new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET,
+        Key: filename,
+      }));
 
-    const file = storage.root.children.find((f) => f.name === filename);
-    if (!file) {
-      // If file not found in MEGA but exists in Supabase, update Supabase
+      const buffer = await streamToBuffer(result.Body);
+
+      return new Response(buffer, {
+        headers: {
+          "Content-Type": "image/jpeg",
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      });
+
+    } catch (r2Error) {
+      console.error("R2 object not found, updating Supabase", r2Error);
       await supabase
         .from("user")
         .update({ [imageType]: false })
         .eq('id', userId);
       return new Response("File not found", { status: 404 });
     }
-
-    const buffer = await file.downloadBuffer();
-
-    return new Response(buffer, {
-      headers: {
-        "Content-Type": "image/jpeg",
-        // Disable browser and CDN caching completely
-        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0",
-      },
-    });
 
   } catch (err) {
     console.error("Image fetch error:", err);

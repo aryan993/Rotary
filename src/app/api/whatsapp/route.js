@@ -36,20 +36,20 @@ export async function POST() {
     // Send messages for each user
     for (const user of allRecipients) {
         console.log(`{"id": "${user.id}", "number":"${user.phone}", "type": "${user.type}"}`);
-      const response = await fetch('http://localhost:3000/api/send-message', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.WHATSAPP_API_KEY || '', // Set in .env.local
-        },
-        body: JSON.stringify({
-          number: isValidPhoneNumber(user.phone),
-          id: user.id,
-          type:user.type,
-        }),
-      });
-      const result = await response.json();
-      console.log(`Message sent to ${user.phone} (${user.type}):`, result);
+      //const response = await fetch('http://localhost:3000/api/send-message', {
+      //  method: 'POST',
+      //  headers: {
+      //    'Content-Type': 'application/json',
+      //    'x-api-key': process.env.WHATSAPP_API_KEY || '', // Set in .env.local
+      //  },
+      //  body: JSON.stringify({
+      //    number: isValidPhoneNumber(user.phone),
+      //    id: user.id,
+      //    type:user.type,
+      //  }),
+      //});
+      //const result = await response.json();
+      //console.log(`Message sent to ${user.phone} (${user.type}):`, result);
       sentCount++;
     }
 
